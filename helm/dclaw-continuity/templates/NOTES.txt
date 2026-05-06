@@ -1,0 +1,4 @@
+DClaw Continuity deployed!
+
+Frontend: http://dclaw-continuity.local
+Backend API: http://dclaw-continuity-backend:8138
