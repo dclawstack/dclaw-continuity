@@ -13,9 +13,12 @@ from app.api.v1 import (
     exercises,
     functions,
     impact,
+    it_dr,
     recovery,
-    stubs,
+    regulatory,
+    supply_chain,
     vendors,
+    work_area,
 )
 from app.core.config import settings
 from app.core.database import init_db
@@ -64,14 +67,14 @@ app.include_router(
     communications.router, prefix="/api/v1/communications", tags=["communications"]
 )
 
-# P2 — stubs returning 501 (implemented in PR 4)
+# P2
 app.include_router(
-    stubs.work_area_router, prefix="/api/v1/work-area", tags=["p2-stub"]
+    work_area.router, prefix="/api/v1/work-area", tags=["work-area"]
 )
-app.include_router(stubs.it_dr_router, prefix="/api/v1/it-dr", tags=["p2-stub"])
+app.include_router(it_dr.router, prefix="/api/v1/it-dr", tags=["it-dr"])
 app.include_router(
-    stubs.supply_chain_router, prefix="/api/v1/supply-chain", tags=["p2-stub"]
+    supply_chain.router, prefix="/api/v1/supply-chain", tags=["supply-chain"]
 )
 app.include_router(
-    stubs.regulatory_router, prefix="/api/v1/regulatory", tags=["p2-stub"]
+    regulatory.router, prefix="/api/v1/regulatory", tags=["regulatory"]
 )

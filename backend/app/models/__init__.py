@@ -9,8 +9,12 @@ from app.models.crisis import ActivationStatus, CrisisActivation
 from app.models.dependency import Dependency, DependencyType
 from app.models.exercise import Exercise, ExerciseStatus
 from app.models.impact_assessment import ImpactAssessment
+from app.models.it_dr import ITDRPlan, ITSystem, SystemTier
 from app.models.recovery_strategy import RecoveryStrategy, StrategyKind
+from app.models.regulatory import RegulatoryReport, ReportStatus
+from app.models.supply_chain import Supplier, SupplyChainAssessment
 from app.models.vendor import Vendor, VendorAssessment
+from app.models.work_area import SiteKind, WorkAreaPlan, WorkAreaSite
 
 __all__ = [
     "Base",
@@ -30,8 +34,18 @@ __all__ = [
     "Exercise",
     "ExerciseStatus",
     "ImpactAssessment",
+    "ITDRPlan",
+    "ITSystem",
     "RecoveryStrategy",
+    "RegulatoryReport",
+    "ReportStatus",
+    "SiteKind",
     "StrategyKind",
+    "Supplier",
+    "SupplyChainAssessment",
+    "SystemTier",
     "Vendor",
     "VendorAssessment",
+    "WorkAreaPlan",
+    "WorkAreaSite",
 ]

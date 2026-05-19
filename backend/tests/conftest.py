@@ -84,8 +84,12 @@ def fake_llm(monkeypatch):
         copilot_service,
         exercise_service,
         impact_service,
+        it_dr_service,
         recovery_service,
+        regulatory_service,
+        supply_chain_service,
         vendor_service,
+        work_area_service,
     )
 
     for mod in (
@@ -94,8 +98,12 @@ def fake_llm(monkeypatch):
         copilot_service,
         exercise_service,
         impact_service,
+        it_dr_service,
         recovery_service,
+        regulatory_service,
+        supply_chain_service,
         vendor_service,
+        work_area_service,
     ):
         monkeypatch.setattr(mod, "get_llm_client", lambda: fake)
     return fake

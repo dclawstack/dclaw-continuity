@@ -187,6 +187,104 @@ export interface CommunicationPlan {
   updated_at: string;
 }
 
+export type SiteKind =
+  | "alternate_office"
+  | "remote"
+  | "hot_site"
+  | "warm_site"
+  | "cold_site"
+  | "coworking"
+  | "other";
+
+export interface WorkAreaSite {
+  id: string;
+  name: string;
+  kind: SiteKind;
+  location: string;
+  capacity_seats: number;
+  has_remote_access: boolean;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkAreaPlan {
+  id: string;
+  function_id: string;
+  headcount_required: number;
+  summary: string;
+  details: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export type SystemTier = "tier-0" | "tier-1" | "tier-2" | "tier-3";
+
+export interface ITSystem {
+  id: string;
+  name: string;
+  description: string;
+  owner: string;
+  tier: SystemTier;
+  rto_minutes: number;
+  rpo_minutes: number;
+  backup_strategy: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ITDRPlan {
+  id: string;
+  system_id: string;
+  title: string;
+  summary: string;
+  procedure: Record<string, unknown>;
+  test_plan: Array<Record<string, unknown>>;
+  last_tested_at: string | null;
+  last_test_passed: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  category: string;
+  region: string;
+  criticality: string;
+  description: string;
+  alternatives: string[];
+  disruption_probability: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SupplyChainAssessment {
+  id: string;
+  supplier_id: string;
+  disruption_probability: number;
+  risk_drivers: Array<string | Record<string, unknown>>;
+  suggested_alternatives: Array<Record<string, unknown>>;
+  summary: string;
+  details: Record<string, unknown>;
+  created_at: string;
+}
+
+export type ReportStatus = "draft" | "validated" | "submitted" | "rejected";
+
+export interface RegulatoryReport {
+  id: string;
+  framework: string;
+  period: string;
+  title: string;
+  status: ReportStatus;
+  content: Record<string, unknown>;
+  validation: { complete: boolean; issues: string[]; checked_at: string | null };
+  submission_reference: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export const api = {
   health: () => request<{ status: string }>("/health/"),
@@ -367,6 +465,86 @@ export const api = {
           scenario,
           additional_context: additionalContext,
         }),
+      }),
+  },
+
+  workArea: {
+    listSites: () => request<WorkAreaSite[]>("/api/v1/work-area/sites/"),
+    createSite: (body: Partial<WorkAreaSite> & { name: string; kind: SiteKind }) =>
+      request<WorkAreaSite>("/api/v1/work-area/sites/", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    deleteSite: (id: string) =>
+      request<void>(`/api/v1/work-area/sites/${id}`, { method: "DELETE" }),
+    listPlans: () => request<WorkAreaPlan[]>("/api/v1/work-area/plans/"),
+    recommend: (functionId: string, headcount: number, ctx = "") =>
+      request<WorkAreaPlan>("/api/v1/work-area/plans/recommend", {
+        method: "POST",
+        body: JSON.stringify({
+          function_id: functionId,
+          headcount_required: headcount,
+          additional_context: ctx,
+        }),
+      }),
+  },
+
+  itDr: {
+    listSystems: () => request<ITSystem[]>("/api/v1/it-dr/systems/"),
+    createSystem: (body: Partial<ITSystem> & { name: string }) =>
+      request<ITSystem>("/api/v1/it-dr/systems/", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    listPlans: () => request<ITDRPlan[]>("/api/v1/it-dr/plans/"),
+    generatePlan: (systemId: string, ctx = "") =>
+      request<ITDRPlan>("/api/v1/it-dr/plans/generate", {
+        method: "POST",
+        body: JSON.stringify({
+          system_id: systemId,
+          additional_context: ctx,
+        }),
+      }),
+    recordTest: (planId: string, passed: boolean, notes = "") =>
+      request<ITDRPlan>(`/api/v1/it-dr/plans/${planId}/test-record`, {
+        method: "POST",
+        body: JSON.stringify({ passed, notes }),
+      }),
+  },
+
+  supplyChain: {
+    list: () => request<Supplier[]>("/api/v1/supply-chain/"),
+    create: (body: Partial<Supplier> & { name: string }) =>
+      request<Supplier>("/api/v1/supply-chain/", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    assessments: (id: string) =>
+      request<SupplyChainAssessment[]>(
+        `/api/v1/supply-chain/${id}/assessments`,
+      ),
+    assess: (id: string, ctx = "") =>
+      request<SupplyChainAssessment>("/api/v1/supply-chain/assess", {
+        method: "POST",
+        body: JSON.stringify({ supplier_id: id, additional_context: ctx }),
+      }),
+  },
+
+  regulatory: {
+    list: () => request<RegulatoryReport[]>("/api/v1/regulatory/"),
+    generate: (framework: string, period: string, ctx = "") =>
+      request<RegulatoryReport>("/api/v1/regulatory/generate", {
+        method: "POST",
+        body: JSON.stringify({
+          framework,
+          period,
+          additional_context: ctx,
+        }),
+      }),
+    submit: (id: string, submissionReference: string) =>
+      request<RegulatoryReport>(`/api/v1/regulatory/${id}/submit`, {
+        method: "POST",
+        body: JSON.stringify({ submission_reference: submissionReference }),
       }),
   },
 };
