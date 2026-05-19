@@ -1,10 +1,14 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes import health
 from app.core.config import settings
 from app.core.database import init_db
-from app.api.routes import health
+from app.core.logging import configure_logging
+
+configure_logging()
 
 
 @asynccontextmanager
@@ -15,7 +19,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    version="1.0.0",
+    version="1.2.0",
     lifespan=lifespan,
 )
 

@@ -1,0 +1,52 @@
+{
+  "app_id": "continuity",
+  "name": "DClaw Continuity",
+  "tagline": "Business continuity",
+  "category": "Operations",
+  "color": "#3B82F6",
+  "version": "1.2.0",
+  "phase": "Future",
+  "maturity_tier": "tier-2-partial",
+  "ports": {
+    "frontend_dev": 3064,
+    "backend_dev": 8150
+  },
+  "endpoints": {
+    "health": "/health/",
+    "api_base": "/api/v1"
+  },
+  "features": {
+    "p0": [
+      "ai-continuity-copilot",
+      "bcp-development",
+      "impact-analysis",
+      "recovery-strategies"
+    ],
+    "p1": [
+      "exercise-management",
+      "crisis-integration",
+      "vendor-continuity",
+      "communication-plans"
+    ],
+    "p2": [
+      "work-area-recovery",
+      "it-dr-planning",
+      "supply-chain-continuity",
+      "regulatory-reporting"
+    ]
+  },
+  "ai_copilot": {
+    "enabled": true,
+    "mandate": "yc-s25-w26",
+    "providers": {
+      "primary": "openrouter",
+      "fallback": "ollama"
+    }
+  },
+  "stack": {
+    "frontend": "next.js-14",
+    "backend": "fastapi",
+    "database": "postgresql-16",
+    "auth": "logto"
+  }
+}
