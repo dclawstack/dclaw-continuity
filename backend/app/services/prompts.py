@@ -96,6 +96,109 @@ Additional context:
 """
 
 
+WORK_AREA_PLAN_PROMPT = """You are planning alternate work locations for a
+disrupted business function. Respond ONLY with valid JSON:
+
+{{
+  "summary": string (1-2 sentences),
+  "assignments": [
+    {{
+      "site_id": string,
+      "site_name": string,
+      "seats": number,
+      "rationale": string
+    }}
+  ],
+  "shortfall_seats": number (0 if fully covered),
+  "test_plan": string (how to validate remote access / readiness)
+}}
+
+Function: {function_name} (criticality: {criticality})
+Required headcount: {headcount}
+Available sites: {sites}
+Additional context: {additional_context}
+"""
+
+
+IT_DR_PLAN_PROMPT = """You are generating an IT disaster recovery plan for the
+following system. Respond ONLY with valid JSON:
+
+{{
+  "title": string,
+  "summary": string,
+  "prerequisites": [string],
+  "procedure": [{{"step": number, "action": string, "owner": string, "duration_minutes": number}}],
+  "validation": [string],
+  "failback": [string],
+  "test_plan": [
+    {{
+      "name": string,
+      "schedule": string (cron-friendly description),
+      "validates": string,
+      "automation_hint": string
+    }}
+  ]
+}}
+
+System:
+- Name: {name}
+- Description: {description}
+- Owner: {owner}
+- Tier: {tier}
+- RTO target: {rto_minutes}m
+- RPO target: {rpo_minutes}m
+- Current backup strategy: {backup_strategy}
+
+Additional context:
+{additional_context}
+"""
+
+
+SUPPLY_CHAIN_PROMPT = """You are predicting supply-chain disruption risk for a
+critical supplier. Respond ONLY with valid JSON:
+
+{{
+  "disruption_probability": number (0-100),
+  "risk_drivers": [string],
+  "suggested_alternatives": [{{"name": string, "rationale": string}}],
+  "summary": string,
+  "monitoring_indicators": [string]
+}}
+
+Supplier:
+- Name: {name}
+- Category: {category}
+- Region: {region}
+- Criticality: {criticality}
+- Description: {description}
+- Known alternatives: {known_alternatives}
+
+Additional context:
+{additional_context}
+"""
+
+
+REGULATORY_REPORT_PROMPT = """You are drafting a business-continuity compliance
+report for a regulator. Auto-populate from the evidence snapshot. Respond ONLY
+with valid JSON that has these top-level keys at minimum:
+
+{{
+  "title": string,
+  "executive_summary": string,
+  "metrics": {{ "bcps_in_force": number, "exercises_completed": number, "vendor_coverage_pct": number, "avg_exercise_score": number }},
+  "sections": [
+    {{ "title": string, "body": string }}
+  ],
+  "attestation": string
+}}
+
+Framework: {framework}
+Reporting period: {period}
+Evidence snapshot: {snapshot}
+Additional context: {additional_context}
+"""
+
+
 VENDOR_CONTINUITY_PROMPT = """You are assessing a vendor's business continuity
 readiness. Respond ONLY with valid JSON:
 

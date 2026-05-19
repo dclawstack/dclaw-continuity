@@ -14,6 +14,10 @@ const links = [
   { href: "/crisis", label: "Crisis" },
   { href: "/vendors", label: "Vendors" },
   { href: "/communications", label: "Comms" },
+  { href: "/work-area", label: "Sites" },
+  { href: "/it-dr", label: "IT DR" },
+  { href: "/supply-chain", label: "Supply" },
+  { href: "/regulatory", label: "Reports" },
 ];
 
 export function SiteNav() {
@@ -28,7 +32,7 @@ export function SiteNav() {
           />
           <span className="font-semibold">DClaw Continuity</span>
         </div>
-        <nav className="flex items-center gap-1 text-sm">
+        <nav className="flex items-center gap-1 text-sm overflow-x-auto">
           {links.map((l) => {
             const active =
               l.href === "/" ? path === "/" : path?.startsWith(l.href);
@@ -37,7 +41,7 @@ export function SiteNav() {
                 key={l.href}
                 href={l.href}
                 className={cn(
-                  "px-3 py-1.5 rounded-md transition-colors",
+                  "px-3 py-1.5 rounded-md whitespace-nowrap transition-colors",
                   active
                     ? "bg-slate-900 text-white"
                     : "text-slate-600 hover:bg-slate-100",
