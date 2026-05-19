@@ -96,6 +96,91 @@ Additional context:
 """
 
 
+VENDOR_CONTINUITY_PROMPT = """You are assessing a vendor's business continuity
+readiness. Respond ONLY with valid JSON:
+
+{{
+  "readiness_score": number (0-100),
+  "risk_level": "low" | "medium" | "high" | "critical",
+  "summary": string,
+  "strengths": [string],
+  "weaknesses": [string],
+  "monitoring_indicators": [string] (specific signals to watch over time)
+}}
+
+Vendor:
+- Name: {name}
+- Description: {description}
+- Services provided: {services}
+- Tier: {tier}
+
+Additional context:
+{additional_context}
+"""
+
+
+COMMUNICATION_PLAN_PROMPT = """You are drafting a stakeholder communication plan
+for a continuity scenario. Respond ONLY with valid JSON:
+
+{{
+  "audience": string,
+  "channels": [string] (e.g. email, SMS, status page, intranet, press),
+  "tone": string (e.g. formal, reassuring, urgent),
+  "templates": [
+    {{
+      "channel": string,
+      "trigger": string (when to send),
+      "subject": string,
+      "body": string
+    }}
+  ],
+  "escalation_path": [string]
+}}
+
+Function: {function_name} ({criticality})
+Scenario: {scenario}
+Audience: {audience}
+Additional context: {additional_context}
+"""
+
+
+EXERCISE_SCENARIO_PROMPT = """You are designing a realistic continuity exercise
+for the following BCP. Respond ONLY with valid JSON:
+
+{{
+  "name": string,
+  "scenario": string (a vivid 2-paragraph injection — what happens, when, who notices),
+  "objectives": [string] (3-5 measurable outcomes)
+}}
+
+Context:
+- Function: {function_name} (criticality: {criticality})
+- BCP: {bcp_title}
+- BCP summary: {bcp_summary}
+- Exercise focus: {focus}
+"""
+
+
+EXERCISE_EVALUATION_PROMPT = """You are evaluating how a team performed during a
+continuity exercise. Respond ONLY with valid JSON:
+
+{{
+  "score": number (0-100 — overall readiness),
+  "strengths": [string],
+  "weaknesses": [string],
+  "missed_objectives": [string],
+  "recommendations": [string]
+}}
+
+Exercise: {exercise_name}
+Scenario: {scenario}
+Objectives: {objectives}
+Observations from operator: {observations}
+Issues encountered: {issues}
+Referenced BCP summary: {bcp_summary}
+"""
+
+
 RECOVERY_RECOMMENDATION_PROMPT = """You are recommending recovery strategies for
 a business function. Recommend 3 distinct strategies that span cost/recovery-time
 trade-offs. Respond ONLY with valid JSON:

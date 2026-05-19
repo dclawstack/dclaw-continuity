@@ -6,12 +6,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import health
 from app.api.v1 import (
     bcps,
+    communications,
     copilot,
+    crisis,
     dependencies,
+    exercises,
     functions,
     impact,
     recovery,
     stubs,
+    vendors,
 )
 from app.core.config import settings
 from app.core.database import init_db
@@ -42,7 +46,7 @@ app.add_middleware(
 
 app.include_router(health.router, prefix="/health", tags=["health"])
 
-# P0 — implemented
+# P0
 app.include_router(functions.router, prefix="/api/v1/functions", tags=["functions"])
 app.include_router(bcps.router, prefix="/api/v1/bcps", tags=["bcps"])
 app.include_router(impact.router, prefix="/api/v1/impact", tags=["impact"])
@@ -52,13 +56,15 @@ app.include_router(
 )
 app.include_router(copilot.router, prefix="/api/v1/copilot", tags=["copilot"])
 
-# P1/P2 — stubs returning 501 (implemented in subsequent PRs)
-app.include_router(stubs.exercises_router, prefix="/api/v1/exercises", tags=["p1-stub"])
-app.include_router(stubs.crisis_router, prefix="/api/v1/crisis", tags=["p1-stub"])
-app.include_router(stubs.vendors_router, prefix="/api/v1/vendors", tags=["p1-stub"])
+# P1
+app.include_router(exercises.router, prefix="/api/v1/exercises", tags=["exercises"])
+app.include_router(crisis.router, prefix="/api/v1/crisis", tags=["crisis"])
+app.include_router(vendors.router, prefix="/api/v1/vendors", tags=["vendors"])
 app.include_router(
-    stubs.communications_router, prefix="/api/v1/communications", tags=["p1-stub"]
+    communications.router, prefix="/api/v1/communications", tags=["communications"]
 )
+
+# P2 — stubs returning 501 (implemented in PR 4)
 app.include_router(
     stubs.work_area_router, prefix="/api/v1/work-area", tags=["p2-stub"]
 )

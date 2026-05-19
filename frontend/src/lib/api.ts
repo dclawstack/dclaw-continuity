@@ -103,6 +103,90 @@ export interface CopilotChatResponse {
   suggestions: CopilotSuggestion[];
 }
 
+export type ExerciseStatus = "planned" | "running" | "completed" | "cancelled";
+
+export interface Exercise {
+  id: string;
+  bcp_id: string;
+  name: string;
+  scenario: string;
+  objectives: string[];
+  status: ExerciseStatus;
+  score: number;
+  evaluation: Record<string, unknown>;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ActivationStatus =
+  | "activated"
+  | "recovering"
+  | "stabilized"
+  | "closed";
+
+export interface CrisisActivation {
+  id: string;
+  bcp_id: string;
+  external_crisis_id: string | null;
+  source: string;
+  title: string;
+  description: string;
+  status: ActivationStatus;
+  activated_at: string;
+  closed_at: string | null;
+  timeline: Array<{ at: string; status: string; note: string }>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Vendor {
+  id: string;
+  name: string;
+  description: string;
+  contact: string;
+  services_provided: string;
+  tier: string;
+  readiness_score: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VendorAssessment {
+  id: string;
+  vendor_id: string;
+  readiness_score: number;
+  risk_level: string;
+  summary: string;
+  details: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface CommunicationTemplate {
+  id: string;
+  plan_id: string;
+  channel: string;
+  trigger: string;
+  subject: string;
+  body: string;
+  created_at: string;
+}
+
+export interface CommunicationPlan {
+  id: string;
+  function_id: string;
+  audience: string;
+  scenario: string;
+  tone: string;
+  channels: string[];
+  escalation_path: string[];
+  notes: string;
+  templates: CommunicationTemplate[];
+  created_at: string;
+  updated_at: string;
+}
+
 
 export const api = {
   health: () => request<{ status: string }>("/health/"),
@@ -190,6 +274,98 @@ export const api = {
         body: JSON.stringify({
           message,
           conversation_id: conversationId,
+        }),
+      }),
+  },
+
+  exercises: {
+    list: (bcpId?: string) =>
+      request<Exercise[]>(
+        bcpId
+          ? `/api/v1/exercises/?bcp_id=${bcpId}`
+          : "/api/v1/exercises/",
+      ),
+    generate: (bcpId: string, focus = "") =>
+      request<Exercise>("/api/v1/exercises/generate", {
+        method: "POST",
+        body: JSON.stringify({ bcp_id: bcpId, focus }),
+      }),
+    start: (id: string) =>
+      request<Exercise>(`/api/v1/exercises/${id}/start`, { method: "POST" }),
+    evaluate: (
+      id: string,
+      observations: string,
+      issues_encountered: string[] = [],
+    ) =>
+      request<Exercise>(`/api/v1/exercises/${id}/evaluate`, {
+        method: "POST",
+        body: JSON.stringify({ observations, issues_encountered }),
+      }),
+  },
+
+  crisis: {
+    list: (onlyOpen = false) =>
+      request<CrisisActivation[]>(
+        `/api/v1/crisis/?only_open=${onlyOpen ? "true" : "false"}`,
+      ),
+    activate: (body: {
+      bcp_id?: string;
+      function_id?: string;
+      external_crisis_id?: string;
+      source?: string;
+      title: string;
+      description?: string;
+    }) =>
+      request<CrisisActivation>("/api/v1/crisis/activate", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    updateStatus: (id: string, status: ActivationStatus, note = "") =>
+      request<CrisisActivation>(`/api/v1/crisis/${id}/status`, {
+        method: "POST",
+        body: JSON.stringify({ status, note }),
+      }),
+  },
+
+  vendors: {
+    list: () => request<Vendor[]>("/api/v1/vendors/"),
+    create: (body: Partial<Vendor> & { name: string }) =>
+      request<Vendor>("/api/v1/vendors/", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    assessments: (vendorId: string) =>
+      request<VendorAssessment[]>(`/api/v1/vendors/${vendorId}/assessments`),
+    assess: (vendorId: string, additionalContext = "") =>
+      request<VendorAssessment>("/api/v1/vendors/assess", {
+        method: "POST",
+        body: JSON.stringify({
+          vendor_id: vendorId,
+          additional_context: additionalContext,
+        }),
+      }),
+  },
+
+  communications: {
+    list: (functionId?: string) =>
+      request<CommunicationPlan[]>(
+        functionId
+          ? `/api/v1/communications/?function_id=${functionId}`
+          : "/api/v1/communications/",
+      ),
+    draft: (
+      functionId: string,
+      audience: string,
+      scenario: string,
+      additionalContext = "",
+    ) =>
+      request<CommunicationPlan>("/api/v1/communications/draft", {
+        method: "POST",
+        body: JSON.stringify({
+          function_id: functionId,
+          audience,
+          scenario,
+          additional_context: additionalContext,
         }),
       }),
   },
