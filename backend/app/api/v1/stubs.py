@@ -1,8 +1,7 @@
-"""P1/P2 feature stubs.
+"""P2 feature stubs.
 
 These endpoints return 501 until the corresponding feature is implemented in
-subsequent PRs. They exist so the API surface matches REVISED-PRD.md and
-consumers can discover them.
+PR 4. They exist so the API surface matches REVISED-PRD.md.
 """
 
 from __future__ import annotations
@@ -18,22 +17,6 @@ def _stub(feature: str):
         )
 
     return handler
-
-
-# P1
-exercises_router = APIRouter()
-exercises_router.add_api_route("/", _stub("P1.1 Exercise Management"), methods=["GET"])
-
-crisis_router = APIRouter()
-crisis_router.add_api_route("/", _stub("P1.2 Crisis Integration"), methods=["GET"])
-
-vendors_router = APIRouter()
-vendors_router.add_api_route("/", _stub("P1.3 Vendor Continuity"), methods=["GET"])
-
-communications_router = APIRouter()
-communications_router.add_api_route(
-    "/", _stub("P1.4 Communication Plans"), methods=["GET"]
-)
 
 
 # P2

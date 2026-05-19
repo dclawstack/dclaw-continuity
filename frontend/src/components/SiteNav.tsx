@@ -10,6 +10,10 @@ const links = [
   { href: "/bcps", label: "BCPs" },
   { href: "/impact", label: "Impact" },
   { href: "/recovery", label: "Recovery" },
+  { href: "/exercises", label: "Exercises" },
+  { href: "/crisis", label: "Crisis" },
+  { href: "/vendors", label: "Vendors" },
+  { href: "/communications", label: "Comms" },
 ];
 
 export function SiteNav() {

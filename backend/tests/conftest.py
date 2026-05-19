@@ -80,11 +80,22 @@ def fake_llm(monkeypatch):
     # bound name in each one so they pick up the fake.
     from app.services import (
         bcp_service,
+        communication_service,
         copilot_service,
+        exercise_service,
         impact_service,
         recovery_service,
+        vendor_service,
     )
 
-    for mod in (bcp_service, copilot_service, impact_service, recovery_service):
+    for mod in (
+        bcp_service,
+        communication_service,
+        copilot_service,
+        exercise_service,
+        impact_service,
+        recovery_service,
+        vendor_service,
+    ):
         monkeypatch.setattr(mod, "get_llm_client", lambda: fake)
     return fake
