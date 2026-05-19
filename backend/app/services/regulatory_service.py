@@ -18,6 +18,7 @@ from app.schemas.regulatory import (
     RegulatoryReportSubmitRequest,
     RegulatoryReportUpdate,
 )
+from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import COPILOT_SYSTEM_PROMPT, REGULATORY_REPORT_PROMPT
 
@@ -97,6 +98,7 @@ async def generate_report(
     db.add(report)
     await db.commit()
     await db.refresh(report)
+    await rag_service.index_regulatory_report(db, report)
     return report
 
 

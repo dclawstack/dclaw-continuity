@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.business_function import BusinessFunction
 from app.models.recovery_strategy import RecoveryStrategy, StrategyKind
 from app.schemas.recovery import RecoveryRecommendRequest, RecoveryStrategyCreate, RecoveryStrategyUpdate
+from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import COPILOT_SYSTEM_PROMPT, RECOVERY_RECOMMENDATION_PROMPT
 
@@ -105,4 +106,5 @@ async def recommend_strategies(
     await db.commit()
     for s in strategies:
         await db.refresh(s)
+        await rag_service.index_recovery_strategy(db, s)
     return strategies

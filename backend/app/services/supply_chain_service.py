@@ -12,6 +12,7 @@ from app.schemas.supply_chain import (
     SupplierUpdate,
     SupplyChainAssessRequest,
 )
+from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import COPILOT_SYSTEM_PROMPT, SUPPLY_CHAIN_PROMPT
 
@@ -106,6 +107,7 @@ async def assess_supplier(
     db.add(assessment)
     await db.commit()
     await db.refresh(assessment)
+    await rag_service.index_supply_chain_assessment(db, assessment)
     return assessment
 
 

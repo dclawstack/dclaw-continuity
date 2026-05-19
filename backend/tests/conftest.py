@@ -1,8 +1,12 @@
+import hashlib
+import math
 import os
+import struct
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
 
@@ -10,6 +14,7 @@ from app.api.main import app
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.base import Base
+from app.services import embedding as embedding_module
 from app.services import llm as llm_module
 
 TEST_DATABASE_URL = os.environ.get(
@@ -34,6 +39,7 @@ app.dependency_overrides[get_db] = override_get_db
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
     async with test_engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -76,8 +82,8 @@ class FakeLLM:
 def fake_llm(monkeypatch):
     fake = FakeLLM()
     monkeypatch.setattr(llm_module, "get_llm_client", lambda: fake)
-    # Service modules import get_llm_client at module load time; patch the
-    # bound name in each one so they pick up the fake.
+    # Service modules imported get_llm_client at module load time, so patch the
+    # bound names too.
     from app.services import (
         bcp_service,
         communication_service,
@@ -106,4 +112,49 @@ def fake_llm(monkeypatch):
         work_area_service,
     ):
         monkeypatch.setattr(mod, "get_llm_client", lambda: fake)
+    return fake
+
+
+def _deterministic_embedding(text: str, dim: int) -> list[float]:
+    """Deterministic float vector seeded by SHA256(text). Unit-normalized."""
+    h = hashlib.sha256(text.encode("utf-8")).digest()
+    # Repeat the hash to fill `dim` floats (8 bytes per float).
+    needed = dim * 8
+    buf = (h * ((needed // len(h)) + 1))[:needed]
+    raw = [
+        struct.unpack(">d", buf[i * 8 : (i + 1) * 8])[0] for i in range(dim)
+    ]
+    # Map to [-1, 1] roughly + L2 normalize.
+    cleaned = [(v % 2.0) - 1.0 for v in raw]
+    norm = math.sqrt(sum(x * x for x in cleaned)) or 1.0
+    return [x / norm for x in cleaned]
+
+
+class FakeEmbedding:
+    """Deterministic in-process embedder."""
+
+    def __init__(self, dim: int):
+        self.dim = dim
+        self.calls = 0
+
+    async def embed(self, text: str) -> list[float]:
+        self.calls += 1
+        return _deterministic_embedding(text, self.dim)
+
+    async def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        self.calls += len(texts)
+        return [_deterministic_embedding(t, self.dim) for t in texts]
+
+
+@pytest.fixture(autouse=True)
+def fake_embedder(monkeypatch):
+    """Autouse: no test should hit the real Ollama embed endpoint."""
+
+    fake = FakeEmbedding(settings.embedding_dim)
+    monkeypatch.setattr(
+        embedding_module, "get_embedding_client", lambda: fake
+    )
+    from app.services import rag_service
+
+    monkeypatch.setattr(rag_service, "get_embedding_client", lambda: fake)
     return fake

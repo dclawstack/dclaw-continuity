@@ -10,6 +10,7 @@ from app.models.bcp import BCP, BCPStatus
 from app.models.business_function import BusinessFunction
 from app.models.dependency import Dependency
 from app.schemas.bcp import BCPCreate, BCPUpdate
+from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import (
     BCP_GAP_ANALYSIS_PROMPT,
@@ -98,6 +99,7 @@ async def generate_bcp_for_function(
     db.add(bcp)
     await db.commit()
     await db.refresh(bcp)
+    await rag_service.index_bcp(db, bcp)
     return bcp
 
 
