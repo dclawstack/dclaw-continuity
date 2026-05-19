@@ -40,5 +40,5 @@ venv/
 htmlcov/
 
 # Alembic
-alembic/versions/*.py
+# (allow migrations)
 !alembic/versions/.gitkeep
