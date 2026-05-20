@@ -36,3 +36,33 @@ autoscaling:
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+# CloudNativePG-managed Postgres (required for RAG: pgvector).
+# Disable if you bring your own Postgres.
+cnpg:
+  enabled: true
+  instances: 3
+  # IMPORTANT: this image MUST include the pgvector extension. The stock
+  # CNPG image does not — build a custom image or use a bundled distribution.
+  image: ghcr.io/dclawstack/cnpg-pgvector:16
+  database: dclaw_continuity
+  owner: dclaw
+  maxConnections: 100
+  sharedBuffers: 256MB
+  storage:
+    size: 10Gi
+    storageClass: ""  # default storage class if unset
+  pg_hba:
+    - host all all 10.0.0.0/8 md5
+    - host all all 172.16.0.0/12 md5
+    - host all all 192.168.0.0/16 md5
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 2Gi
+  monitoring:
+    enablePodMonitor: false
+  backup: {}

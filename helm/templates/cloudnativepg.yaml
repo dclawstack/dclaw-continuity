@@ -1,0 +1,70 @@
+{{- if .Values.cnpg.enabled }}
+{{- /*
+CloudNativePG-managed Postgres for DClaw Continuity.
+
+Prerequisites in the cluster:
+  1. CNPG operator installed (https://cloudnative-pg.io/documentation/current/installation_upgrade/).
+  2. A pgvector-enabled Postgres image. The default
+     `ghcr.io/cloudnative-pg/postgresql:16` does NOT ship pgvector. Either:
+       - Build a custom image: `FROM ghcr.io/cloudnative-pg/postgresql:16
+         RUN apt-get update && apt-get install -y postgresql-16-pgvector`
+       - Or use a published image that bundles it.
+     Set `.Values.cnpg.image` accordingly.
+
+The cluster bootstraps with `dclaw_continuity` DB owned by the `dclaw` user
+and runs `CREATE EXTENSION vector` so the RAG migration can use pgvector.
+
+The app reads `DATABASE_URL` from the CNPG-managed Secret named
+`<fullname>-pg-app` which CNPG produces automatically.
+*/}}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "dclaw-app.fullname" . }}-pg
+  labels:
+    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: database
+spec:
+  instances: {{ .Values.cnpg.instances }}
+  imageName: {{ .Values.cnpg.image | quote }}
+
+  postgresql:
+    parameters:
+      max_connections: {{ .Values.cnpg.maxConnections | quote }}
+      shared_buffers: {{ .Values.cnpg.sharedBuffers | quote }}
+    {{- with .Values.cnpg.pg_hba }}
+    pg_hba:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+
+  bootstrap:
+    initdb:
+      database: {{ .Values.cnpg.database | quote }}
+      owner: {{ .Values.cnpg.owner | quote }}
+      postInitTemplateSQL:
+        - "CREATE EXTENSION IF NOT EXISTS vector"
+      postInitApplicationSQL:
+        - "CREATE EXTENSION IF NOT EXISTS vector"
+
+  storage:
+    size: {{ .Values.cnpg.storage.size | quote }}
+    {{- with .Values.cnpg.storage.storageClass }}
+    storageClass: {{ . | quote }}
+    {{- end }}
+
+  {{- with .Values.cnpg.resources }}
+  resources:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .Values.cnpg.monitoring }}
+  monitoring:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .Values.cnpg.backup }}
+  backup:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
