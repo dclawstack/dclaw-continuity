@@ -1,0 +1,141 @@
+{{- if .Values.monitoring.grafana.enabled }}
+{{- /*
+Minimal Grafana with the in-cluster Prometheus pre-provisioned as the
+default datasource. Default admin/admin login — override via values for
+anything beyond a smoke test.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "dclaw-app.fullname" . }}-grafana-datasources
+  labels:
+    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: monitoring
+data:
+  datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://{{ include "dclaw-app.fullname" . }}-prometheus:9090
+        isDefault: true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "dclaw-app.fullname" . }}-grafana-admin
+  labels:
+    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: monitoring
+type: Opaque
+stringData:
+  GF_SECURITY_ADMIN_USER: {{ .Values.monitoring.grafana.adminUser | quote }}
+  GF_SECURITY_ADMIN_PASSWORD: {{ .Values.monitoring.grafana.adminPassword | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "dclaw-app.fullname" . }}-grafana
+  labels:
+    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: monitoring
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.monitoring.grafana.storage.size | quote }}
+  {{- with .Values.monitoring.grafana.storage.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dclaw-app.fullname" . }}-grafana
+  labels:
+    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: monitoring
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: monitoring
+      app.kubernetes.io/part-of: grafana
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: monitoring
+        app.kubernetes.io/part-of: grafana
+    spec:
+      securityContext:
+        fsGroup: 472
+      containers:
+        - name: grafana
+          image: {{ .Values.monitoring.grafana.image | quote }}
+          envFrom:
+            - secretRef:
+                name: {{ include "dclaw-app.fullname" . }}-grafana-admin
+          ports:
+            - containerPort: 3000
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          {{- with .Values.monitoring.grafana.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: storage
+              mountPath: /var/lib/grafana
+      volumes:
+        - name: datasources
+          configMap:
+            name: {{ include "dclaw-app.fullname" . }}-grafana-datasources
+        - name: storage
+          persistentVolumeClaim:
+            claimName: {{ include "dclaw-app.fullname" . }}-grafana
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "dclaw-app.fullname" . }}-grafana
+  labels:
+    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: grafana
+{{- end }}

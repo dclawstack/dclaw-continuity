@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.routes import health
 from app.api.v1 import (
@@ -51,6 +52,20 @@ app.add_middleware(
 
 app.include_router(health.router, prefix="/health", tags=["health"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+
+# Prometheus /metrics — Counter/Histogram per endpoint + status code.
+# Excludes /health and /metrics itself from the request-counter to keep
+# the series cardinality low.
+Instrumentator(
+    excluded_handlers=["/health/.*", "/metrics"],
+    should_group_status_codes=True,
+    should_ignore_untemplated=True,
+).instrument(app).expose(
+    app,
+    endpoint="/metrics",
+    include_in_schema=False,
+    tags=["monitoring"],
+)
 
 # P0
 app.include_router(functions.router, prefix="/api/v1/functions", tags=["functions"])

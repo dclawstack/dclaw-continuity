@@ -1,0 +1,16 @@
+# Local development Prometheus scrape config (docker-compose).
+# The cluster deployment generates its own via helm/templates/prometheus.yaml.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: dclaw-continuity-backend
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - backend:8150
+        labels:
+          app: dclaw-continuity
+          component: backend
