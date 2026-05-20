@@ -129,3 +129,11 @@ export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(TOKEN_KEY);
 }
+
+/** Persist a session from outside React. Used by the demo flow so a new
+ * tab opened on /dashboard finds itself already signed in. */
+export function setStoredSession(token: string, user: SessionUser): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
