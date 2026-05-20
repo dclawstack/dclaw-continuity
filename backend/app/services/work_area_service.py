@@ -13,6 +13,7 @@ from app.schemas.work_area import (
     WorkAreaSiteCreate,
     WorkAreaSiteUpdate,
 )
+from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import COPILOT_SYSTEM_PROMPT, WORK_AREA_PLAN_PROMPT
 
@@ -111,4 +112,5 @@ async def recommend_plan(
     db.add(plan)
     await db.commit()
     await db.refresh(plan)
+    await rag_service.index_work_area_plan(db, plan)
     return plan

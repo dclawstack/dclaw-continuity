@@ -10,6 +10,7 @@ from app.models.dependency import Dependency, DependencyType
 from app.models.exercise import Exercise, ExerciseStatus
 from app.models.impact_assessment import ImpactAssessment
 from app.models.it_dr import ITDRPlan, ITSystem, SystemTier
+from app.models.knowledge_chunk import KnowledgeChunk
 from app.models.recovery_strategy import RecoveryStrategy, StrategyKind
 from app.models.regulatory import RegulatoryReport, ReportStatus
 from app.models.supply_chain import Supplier, SupplyChainAssessment
@@ -36,6 +37,7 @@ __all__ = [
     "ImpactAssessment",
     "ITDRPlan",
     "ITSystem",
+    "KnowledgeChunk",
     "RecoveryStrategy",
     "RegulatoryReport",
     "ReportStatus",

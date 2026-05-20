@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.vendor import Vendor, VendorAssessment
 from app.schemas.vendor import VendorAssessRequest, VendorCreate, VendorUpdate
+from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import COPILOT_SYSTEM_PROMPT, VENDOR_CONTINUITY_PROMPT
 
@@ -91,6 +92,7 @@ async def assess_vendor(
     db.add(assessment)
     await db.commit()
     await db.refresh(assessment)
+    await rag_service.index_vendor_assessment(db, assessment)
     return assessment
 
 

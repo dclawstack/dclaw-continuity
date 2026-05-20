@@ -18,6 +18,7 @@ from app.schemas.copilot import (
     CopilotChatResponse,
     CopilotSuggestion,
 )
+from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import COPILOT_SYSTEM_PROMPT
 
@@ -26,6 +27,12 @@ _SUGGEST_HINT = """After your answer, on a new line, emit a JSON object with the
 key "suggestions" — an array (0-3 items) of {action, label, payload}. Use
 actions from: create_function, generate_bcp, model_impact, recommend_recovery,
 gap_analysis. Wrap the JSON between <suggest> and </suggest> tags."""
+
+
+_RAG_HINT = """If the retrieved evidence below is relevant, cite it inline like
+"(per BCP: <title>)" or "(per Exercise eval: <title>)". If nothing in the
+evidence applies, answer from general continuity knowledge and don't fabricate
+citations."""
 
 
 async def chat(
@@ -39,6 +46,7 @@ async def chat(
     conversation_id = request.conversation_id or uuid.uuid4()
     context_snapshot = await _build_context_snapshot(db)
     history = await _load_history(db, conversation_id, limit=10)
+    retrieved = await rag_service.search(db, request.message)
 
     messages: list[ChatMessage] = [
         ChatMessage(role="system", content=COPILOT_SYSTEM_PROMPT),
@@ -46,8 +54,16 @@ async def chat(
             role="system",
             content=f"Current workspace snapshot:\n{json.dumps(context_snapshot, indent=2)}",
         ),
-        ChatMessage(role="system", content=_SUGGEST_HINT),
     ]
+    if retrieved:
+        messages.append(
+            ChatMessage(
+                role="system",
+                content=_format_retrieved(retrieved),
+            )
+        )
+        messages.append(ChatMessage(role="system", content=_RAG_HINT))
+    messages.append(ChatMessage(role="system", content=_SUGGEST_HINT))
     messages.extend(history)
     messages.append(ChatMessage(role="user", content=request.message))
 
@@ -133,6 +149,15 @@ async def _build_context_snapshot(db: AsyncSession) -> dict:
             for f in fn_sample
         ],
     }
+
+
+def _format_retrieved(hits: list) -> str:
+    lines = ["Retrieved evidence (most similar first):"]
+    for h in hits:
+        lines.append(
+            f"- [{h.source_type}] {h.title}\n  {h.text[:600]}"
+        )
+    return "\n".join(lines)
 
 
 _SUGGEST_RE = re.compile(r"<suggest>(.*?)</suggest>", re.DOTALL)

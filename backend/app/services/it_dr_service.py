@@ -13,6 +13,7 @@ from app.schemas.it_dr import (
     ITSystemCreate,
     ITSystemUpdate,
 )
+from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import COPILOT_SYSTEM_PROMPT, IT_DR_PLAN_PROMPT
 
@@ -112,6 +113,7 @@ async def generate_plan(
     db.add(plan)
     await db.commit()
     await db.refresh(plan)
+    await rag_service.index_it_dr_plan(db, plan)
     return plan
 
 

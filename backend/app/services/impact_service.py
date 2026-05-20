@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.business_function import BusinessFunction
 from app.models.impact_assessment import ImpactAssessment
 from app.schemas.impact import ImpactAssessmentCreate, ImpactModelRequest
+from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import COPILOT_SYSTEM_PROMPT, IMPACT_MODELING_PROMPT
 
@@ -76,6 +77,7 @@ async def model_impact_scenario(
     db.add(ia)
     await db.commit()
     await db.refresh(ia)
+    await rag_service.index_impact(db, ia)
     return ia
 
 

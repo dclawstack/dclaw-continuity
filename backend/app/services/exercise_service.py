@@ -15,6 +15,7 @@ from app.schemas.exercise import (
     ExerciseRunObservation,
     ExerciseUpdate,
 )
+from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import (
     COPILOT_SYSTEM_PROMPT,
@@ -145,6 +146,7 @@ async def evaluate_exercise(
     ex.completed_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(ex)
+    await rag_service.index_exercise_evaluation(db, ex)
     return ex
 
 

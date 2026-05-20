@@ -14,6 +14,7 @@ from app.schemas.communication import (
     CommunicationPlanCreate,
     CommunicationPlanUpdate,
 )
+from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import COMMUNICATION_PLAN_PROMPT, COPILOT_SYSTEM_PROMPT
 
@@ -59,7 +60,10 @@ async def update_plan(
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(plan, k, v)
     await db.commit()
-    return await get_plan(db, plan.id)  # type: ignore[return-value]
+    full = await get_plan(db, plan.id)
+    if full is not None:
+        await rag_service.index_communication_plan(db, full)
+    return full  # type: ignore[return-value]
 
 
 async def delete_plan(db: AsyncSession, plan: CommunicationPlan) -> None:
@@ -117,4 +121,7 @@ async def draft_plan(
         )
 
     await db.commit()
-    return await get_plan(db, plan.id)  # type: ignore[return-value]
+    full = await get_plan(db, plan.id)
+    if full is not None:
+        await rag_service.index_communication_plan(db, full)
+    return full  # type: ignore[return-value]
