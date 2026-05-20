@@ -21,11 +21,13 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16-alpine
+        # pgvector-enabled Postgres so `CREATE EXTENSION vector` in conftest.setup_db
+        # works for RAG tests. The stock postgres:16-alpine doesn't bundle pgvector.
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: dclaw_app_test
+          POSTGRES_DB: dclaw_continuity_test
         ports:
           - 5432:5432
         options: >-
@@ -47,7 +49,7 @@ jobs:
       - name: Run tests
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/dclaw_app_test
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/dclaw_continuity_test
         run: python -m pytest -v --tb=short
 
   frontend-build:
