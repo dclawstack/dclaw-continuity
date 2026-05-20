@@ -1,14 +1,11 @@
 name: Claude Code Review
 
+# DISABLED — `anthropics/claude-code-action@v1` is currently broken with
+# "Internal error: directory mismatch ... You don't need to do anything, but
+# this indicates a bug." Re-enable by restoring the pull_request trigger
+# once the upstream action is fixed (or pin to a known-good ref).
 on:
-  pull_request:
-    types: [opened, synchronize, ready_for_review, reopened]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+  workflow_dispatch:
 
 jobs:
   claude-review:
