@@ -14,6 +14,7 @@ from app.models.knowledge_chunk import KnowledgeChunk
 from app.models.recovery_strategy import RecoveryStrategy, StrategyKind
 from app.models.regulatory import RegulatoryReport, ReportStatus
 from app.models.supply_chain import Supplier, SupplyChainAssessment
+from app.models.user import User
 from app.models.vendor import Vendor, VendorAssessment
 from app.models.work_area import SiteKind, WorkAreaPlan, WorkAreaSite
 
@@ -46,6 +47,7 @@ __all__ = [
     "Supplier",
     "SupplyChainAssessment",
     "SystemTier",
+    "User",
     "Vendor",
     "VendorAssessment",
     "WorkAreaPlan",

@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import health
 from app.api.v1 import (
+    auth,
     bcps,
     communications,
     copilot,
@@ -48,6 +49,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router, prefix="/health", tags=["health"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 
 # P0
 app.include_router(functions.router, prefix="/api/v1/functions", tags=["functions"])

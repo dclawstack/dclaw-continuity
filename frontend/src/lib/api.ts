@@ -1,5 +1,6 @@
+import { getStoredToken } from "@/lib/auth";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-const DEV_TOKEN = process.env.NEXT_PUBLIC_DEV_AUTH_TOKEN || "dev-token";
 
 export class ApiError extends Error {
   status: number;
@@ -10,13 +11,16 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getStoredToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((init.headers as Record<string, string> | undefined) || {}),
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${DEV_TOKEN}`,
-      ...(init.headers || {}),
-    },
+    headers,
     cache: "no-store",
   });
   if (!res.ok) {

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SiteNav } from "@/components/SiteNav";
 import { Copilot } from "@/components/Copilot";
+import { AuthShell } from "@/components/AuthShell";
+import { AuthProvider } from "@/lib/auth";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -17,9 +19,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-slate-50 min-h-screen`}>
-        <SiteNav />
-        <main className="max-w-6xl mx-auto px-6 py-8">{children}</main>
-        <Copilot />
+        <AuthProvider>
+          <SiteNav />
+          <main className="max-w-6xl mx-auto px-6 py-8">
+            <AuthShell>{children}</AuthShell>
+          </main>
+          <Copilot />
+        </AuthProvider>
       </body>
     </html>
   );
