@@ -18,12 +18,31 @@ service:
     type: ClusterIP
     port: 3000
 
+# Public ingress for the app. PRD §4.3 requires TLS on ingress in prod;
+# keep this off in dev when there's no TLS terminator in the cluster.
 ingress:
   enabled: false
-  className: ""
-  annotations: {}
-  hosts: []
-  tls: []
+  className: nginx
+  # Hostname users hit in the browser; required when ingress.enabled=true.
+  host: ""
+  # Paths sent to the backend Service. Everything else falls through to
+  # the frontend (Next.js).
+  backendPaths:
+    - /api/v1
+    - /health
+    - /metrics
+  # Default annotations work with NGINX ingress + cert-manager. Override
+  # for traefik / istio / GKE / managed offerings.
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 25m  # allow attachment uploads
+    # Uncomment for cert-manager auto-provisioning:
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls:
+    enabled: false
+    # If set, must reference an existing TLS Secret containing tls.crt + tls.key.
+    # When unset and cert-manager annotation above is on, cert-manager creates
+    # `<release>-dclaw-continuity-tls` automatically.
+    secretName: ""
 
 resources: {}
 

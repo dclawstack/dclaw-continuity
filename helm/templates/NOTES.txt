@@ -21,3 +21,19 @@ Postgres: bring your own — set DATABASE_URL in the secret manually.
 Verify pgvector + run migrations:
   kubectl exec -it deployment/{{ include "dclaw-app.fullname" . }}-backend -- \
     alembic upgrade head
+
+{{- if .Values.ingress.enabled }}
+
+Ingress: https://{{ .Values.ingress.host }}
+{{- if not .Values.ingress.tls.enabled }}
+
+  ⚠ TLS is disabled — PRD §4.3 requires TLS in production. Either set
+    `ingress.tls.enabled=true` with `ingress.tls.secretName` pointing at a
+    pre-created TLS Secret, or add the cert-manager annotation in values.yaml
+    so a cert is auto-provisioned.
+{{- end }}
+{{- else }}
+
+Ingress is disabled. Set `ingress.enabled=true` and `ingress.host=...` to
+expose the app publicly. Don't forget TLS (`ingress.tls.enabled=true`) for prod.
+{{- end }}
