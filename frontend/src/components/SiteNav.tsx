@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LogOut } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 
 const links = [
   { href: "/", label: "Dashboard" },
@@ -21,7 +25,10 @@ const links = [
 ];
 
 export function SiteNav() {
-  const path = usePathname();
+  const path = usePathname() || "/";
+  const { user, signOut } = useAuth();
+  const isAuthPage = path === "/login" || path === "/signup";
+
   return (
     <header className="border-b bg-white">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-6">
@@ -32,26 +39,47 @@ export function SiteNav() {
           />
           <span className="font-semibold">DClaw Continuity</span>
         </div>
-        <nav className="flex items-center gap-1 text-sm overflow-x-auto">
-          {links.map((l) => {
-            const active =
-              l.href === "/" ? path === "/" : path?.startsWith(l.href);
-            return (
+        {!isAuthPage && user && (
+          <nav className="flex items-center gap-1 text-sm overflow-x-auto">
+            {links.map((l) => {
+              const active =
+                l.href === "/" ? path === "/" : path.startsWith(l.href);
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md whitespace-nowrap transition-colors",
+                    active
+                      ? "bg-slate-900 text-white"
+                      : "text-slate-600 hover:bg-slate-100",
+                  )}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
+        <div className="ml-auto flex items-center gap-3">
+          {user ? (
+            <>
+              <span className="text-xs text-slate-500">{user.email}</span>
+              <Button size="sm" variant="ghost" onClick={signOut}>
+                <LogOut className="h-4 w-4 mr-1" /> Sign out
+              </Button>
+            </>
+          ) : (
+            !isAuthPage && (
               <Link
-                key={l.href}
-                href={l.href}
-                className={cn(
-                  "px-3 py-1.5 rounded-md whitespace-nowrap transition-colors",
-                  active
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-600 hover:bg-slate-100",
-                )}
+                href="/login"
+                className="text-sm text-blue-600 hover:underline"
               >
-                {l.label}
+                Sign in
               </Link>
-            );
-          })}
-        </nav>
+            )
+          )}
+        </div>
       </div>
     </header>
   );

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { MessageSquare, Send, Sparkles, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { api, type CopilotSuggestion } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 interface Message {
   role: "user" | "assistant";
@@ -37,6 +38,8 @@ const SUGGESTION_ROUTES: Record<string, string> = {
 
 export function Copilot() {
   const router = useRouter();
+  const pathname = usePathname() || "/";
+  const { token } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([GREETING]);
   const [conversationId, setConversationId] = useState<string | undefined>();
@@ -91,6 +94,11 @@ export function Copilot() {
       router.push(route);
       setOpen(false);
     }
+  }
+
+  // Don't render the Copilot on the auth pages or when not signed in.
+  if (!token || pathname === "/login" || pathname === "/signup") {
+    return null;
   }
 
   return (
