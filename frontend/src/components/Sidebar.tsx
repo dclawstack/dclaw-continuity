@@ -34,7 +34,7 @@ interface NavSection {
 const SECTIONS: NavSection[] = [
   {
     label: "",
-    items: [{ href: "/", label: "Dashboard", icon: Gauge }],
+    items: [{ href: "/dashboard", label: "Dashboard", icon: Gauge }],
   },
   {
     label: "Planning",
