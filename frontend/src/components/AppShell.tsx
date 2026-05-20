@@ -7,19 +7,24 @@ import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { useAuth } from "@/lib/auth";
 
-const PUBLIC_PATHS = new Set(["/login", "/signup"]);
+// Pages that render without the sidebar / no-token redirect.
+const PUBLIC_PATHS = new Set(["/", "/login", "/signup"]);
+const AUTH_PATHS = new Set(["/login", "/signup"]);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname() || "/";
   const isPublic = PUBLIC_PATHS.has(pathname);
+  const isAuthPage = AUTH_PATHS.has(pathname);
 
   useEffect(() => {
     if (loading) return;
+    // Force sign-in for any non-public route when no token.
     if (!token && !isPublic) router.replace("/login");
-    if (token && isPublic) router.replace("/");
-  }, [token, loading, isPublic, router]);
+    // Already signed in: don't waste their time on login/signup.
+    if (token && isAuthPage) router.replace("/dashboard");
+  }, [token, loading, isPublic, isAuthPage, router]);
 
   if (loading) {
     return (
@@ -29,8 +34,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Public auth pages: minimal chrome.
-  if (isPublic) {
+  // Landing page: render bare, no chrome.
+  if (pathname === "/") {
+    return <>{children}</>;
+  }
+
+  // Auth pages: thin top bar, centered card.
+  if (isAuthPage) {
     return (
       <div className="min-h-screen flex flex-col">
         <TopBar />
@@ -39,7 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Not signed in — redirect is firing; render nothing.
+  // Protected pages: redirect-in-flight when no token.
   if (!token) return null;
 
   return (
