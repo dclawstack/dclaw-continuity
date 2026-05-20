@@ -49,9 +49,7 @@ async def setup_db():
 
 @pytest_asyncio.fixture
 async def client():
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
 
 
@@ -121,9 +119,7 @@ def _deterministic_embedding(text: str, dim: int) -> list[float]:
     # Repeat the hash to fill `dim` floats (8 bytes per float).
     needed = dim * 8
     buf = (h * ((needed // len(h)) + 1))[:needed]
-    raw = [
-        struct.unpack(">d", buf[i * 8 : (i + 1) * 8])[0] for i in range(dim)
-    ]
+    raw = [struct.unpack(">d", buf[i * 8 : (i + 1) * 8])[0] for i in range(dim)]
     # Map to [-1, 1] roughly + L2 normalize.
     cleaned = [(v % 2.0) - 1.0 for v in raw]
     norm = math.sqrt(sum(x * x for x in cleaned)) or 1.0
@@ -151,9 +147,7 @@ def fake_embedder(monkeypatch):
     """Autouse: no test should hit the real Ollama embed endpoint."""
 
     fake = FakeEmbedding(settings.embedding_dim)
-    monkeypatch.setattr(
-        embedding_module, "get_embedding_client", lambda: fake
-    )
+    monkeypatch.setattr(embedding_module, "get_embedding_client", lambda: fake)
     from app.services import rag_service
 
     monkeypatch.setattr(rag_service, "get_embedding_client", lambda: fake)

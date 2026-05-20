@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 def utc_now() -> datetime:
@@ -7,4 +7,4 @@ def utc_now() -> datetime:
     PostgreSQL TIMESTAMP WITHOUT TIME ZONE requires naive datetimes.
     Never use datetime.now(timezone.utc) directly in model defaults.
     """
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)

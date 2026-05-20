@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -21,10 +21,10 @@ class ExerciseCreate(ExerciseBase):
 
 
 class ExerciseUpdate(BaseModel):
-    name: Optional[str] = None
-    scenario: Optional[str] = None
-    objectives: Optional[list[str]] = None
-    status: Optional[ExerciseStatus] = None
+    name: str | None = None
+    scenario: str | None = None
+    objectives: list[str] | None = None
+    status: ExerciseStatus | None = None
 
 
 class ExerciseRead(ExerciseBase):
@@ -34,8 +34,8 @@ class ExerciseRead(ExerciseBase):
     bcp_id: uuid.UUID
     score: int
     evaluation: dict[str, Any]
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
+    started_at: datetime | None
+    completed_at: datetime | None
     created_at: datetime
     updated_at: datetime
 

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,22 +16,15 @@ from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import COPILOT_SYSTEM_PROMPT, IT_DR_PLAN_PROMPT
 
-
 # ── Systems ─────────────────────────────────────────────────────────────────
 
 
 async def list_systems(db: AsyncSession) -> list[ITSystem]:
-    return list(
-        (await db.execute(select(ITSystem).order_by(ITSystem.name)))
-        .scalars()
-        .all()
-    )
+    return list((await db.execute(select(ITSystem).order_by(ITSystem.name))).scalars().all())
 
 
-async def get_system(db: AsyncSession, system_id: uuid.UUID) -> Optional[ITSystem]:
-    return (
-        await db.execute(select(ITSystem).where(ITSystem.id == system_id))
-    ).scalar_one_or_none()
+async def get_system(db: AsyncSession, system_id: uuid.UUID) -> ITSystem | None:
+    return (await db.execute(select(ITSystem).where(ITSystem.id == system_id))).scalar_one_or_none()
 
 
 async def create_system(db: AsyncSession, payload: ITSystemCreate) -> ITSystem:
@@ -43,9 +35,7 @@ async def create_system(db: AsyncSession, payload: ITSystemCreate) -> ITSystem:
     return sys
 
 
-async def update_system(
-    db: AsyncSession, sys: ITSystem, payload: ITSystemUpdate
-) -> ITSystem:
+async def update_system(db: AsyncSession, sys: ITSystem, payload: ITSystemUpdate) -> ITSystem:
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(sys, k, v)
     await db.commit()
@@ -61,26 +51,22 @@ async def delete_system(db: AsyncSession, sys: ITSystem) -> None:
 # ── DR Plans ────────────────────────────────────────────────────────────────
 
 
-async def list_plans(
-    db: AsyncSession, system_id: Optional[uuid.UUID] = None
-) -> list[ITDRPlan]:
+async def list_plans(db: AsyncSession, system_id: uuid.UUID | None = None) -> list[ITDRPlan]:
     stmt = select(ITDRPlan).order_by(ITDRPlan.created_at.desc())
     if system_id is not None:
         stmt = stmt.where(ITDRPlan.system_id == system_id)
     return list((await db.execute(stmt)).scalars().all())
 
 
-async def get_plan(db: AsyncSession, plan_id: uuid.UUID) -> Optional[ITDRPlan]:
-    return (
-        await db.execute(select(ITDRPlan).where(ITDRPlan.id == plan_id))
-    ).scalar_one_or_none()
+async def get_plan(db: AsyncSession, plan_id: uuid.UUID) -> ITDRPlan | None:
+    return (await db.execute(select(ITDRPlan).where(ITDRPlan.id == plan_id))).scalar_one_or_none()
 
 
 async def generate_plan(
     db: AsyncSession,
     system: ITSystem,
     additional_context: str = "",
-    llm: Optional[LLMClient] = None,
+    llm: LLMClient | None = None,
 ) -> ITDRPlan:
     """AI-generates a DR plan (procedure + automated test plan) for the system."""
 
@@ -117,10 +103,8 @@ async def generate_plan(
     return plan
 
 
-async def record_test(
-    db: AsyncSession, plan: ITDRPlan, record: ITDRTestRecord
-) -> ITDRPlan:
-    plan.last_tested_at = datetime.now(timezone.utc)
+async def record_test(db: AsyncSession, plan: ITDRPlan, record: ITDRTestRecord) -> ITDRPlan:
+    plan.last_tested_at = datetime.now(UTC)
     plan.last_test_passed = record.passed
     await db.commit()
     await db.refresh(plan)

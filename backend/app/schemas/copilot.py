@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -15,7 +15,7 @@ class CopilotSuggestion(BaseModel):
 
 class CopilotChatRequest(BaseModel):
     message: str = Field(min_length=1)
-    conversation_id: Optional[uuid.UUID] = None
+    conversation_id: uuid.UUID | None = None
     context: dict[str, Any] = Field(default_factory=dict)
 
 

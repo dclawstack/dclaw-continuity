@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +14,7 @@ from app.services.prompts import COPILOT_SYSTEM_PROMPT, IMPACT_MODELING_PROMPT
 
 
 async def list_impact_assessments(
-    db: AsyncSession, function_id: Optional[uuid.UUID] = None
+    db: AsyncSession, function_id: uuid.UUID | None = None
 ) -> list[ImpactAssessment]:
     stmt = select(ImpactAssessment).order_by(ImpactAssessment.created_at.desc())
     if function_id is not None:
@@ -24,12 +23,8 @@ async def list_impact_assessments(
     return list(result.scalars().all())
 
 
-async def get_impact_assessment(
-    db: AsyncSession, impact_id: uuid.UUID
-) -> Optional[ImpactAssessment]:
-    result = await db.execute(
-        select(ImpactAssessment).where(ImpactAssessment.id == impact_id)
-    )
+async def get_impact_assessment(db: AsyncSession, impact_id: uuid.UUID) -> ImpactAssessment | None:
+    result = await db.execute(select(ImpactAssessment).where(ImpactAssessment.id == impact_id))
     return result.scalar_one_or_none()
 
 
@@ -47,7 +42,7 @@ async def model_impact_scenario(
     db: AsyncSession,
     function: BusinessFunction,
     request: ImpactModelRequest,
-    llm: Optional[LLMClient] = None,
+    llm: LLMClient | None = None,
 ) -> ImpactAssessment:
     llm = llm or get_llm_client()
 

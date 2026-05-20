@@ -23,9 +23,7 @@ async def test_signup_login_me_flow(client):
     assert login.json()["user"]["email"] == "alice@example.com"
 
     # /me with the signup token
-    me = await client.get(
-        "/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}
-    )
+    me = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert me.status_code == 200
     assert me.json()["email"] == "alice@example.com"
 
@@ -60,9 +58,7 @@ async def test_protected_route_with_real_jwt(client):
     )
     token = signup.json()["access_token"]
 
-    resp = await client.get(
-        "/api/v1/functions/", headers={"Authorization": f"Bearer {token}"}
-    )
+    resp = await client.get("/api/v1/functions/", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 200
 
 

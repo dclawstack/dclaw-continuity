@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from typing import Optional
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -64,7 +63,7 @@ async def index_for_source(
     source_type: str,
     source_id: uuid.UUID,
     chunks: list[Chunk],
-    embedder: Optional[EmbeddingClient] = None,
+    embedder: EmbeddingClient | None = None,
 ) -> int:
     """Replace all chunks for (source_type, source_id) with `chunks`.
 
@@ -119,7 +118,7 @@ async def index_for_source(
             text=c.text,
             embedding=e,
         )
-        for c, e in zip(chunks, embeddings)
+        for c, e in zip(chunks, embeddings, strict=True)
     ]
     db.add_all(rows)
     await db.commit()
@@ -130,8 +129,8 @@ async def search(
     db: AsyncSession,
     query: str,
     *,
-    k: Optional[int] = None,
-    embedder: Optional[EmbeddingClient] = None,
+    k: int | None = None,
+    embedder: EmbeddingClient | None = None,
 ) -> list[SearchHit]:
     """Best-effort cosine-similarity search. Returns [] if embedding fails."""
 
@@ -179,21 +178,15 @@ async def search(
 
 async def index_bcp(db: AsyncSession, bcp: BCP) -> int:
     fn = (
-        await db.execute(
-            select(BusinessFunction).where(BusinessFunction.id == bcp.function_id)
-        )
+        await db.execute(select(BusinessFunction).where(BusinessFunction.id == bcp.function_id))
     ).scalar_one()
     text = _stringify_bcp(bcp, fn)
-    return await index_for_source(
-        db, "bcp", bcp.id, [Chunk(title=f"BCP: {bcp.title}", text=text)]
-    )
+    return await index_for_source(db, "bcp", bcp.id, [Chunk(title=f"BCP: {bcp.title}", text=text)])
 
 
 async def index_impact(db: AsyncSession, ia: ImpactAssessment) -> int:
     fn = (
-        await db.execute(
-            select(BusinessFunction).where(BusinessFunction.id == ia.function_id)
-        )
+        await db.execute(select(BusinessFunction).where(BusinessFunction.id == ia.function_id))
     ).scalar_one()
     text = (
         f"Function: {fn.name} ({fn.criticality.value})\n"
@@ -211,13 +204,9 @@ async def index_impact(db: AsyncSession, ia: ImpactAssessment) -> int:
     )
 
 
-async def index_recovery_strategy(
-    db: AsyncSession, strat: RecoveryStrategy
-) -> int:
+async def index_recovery_strategy(db: AsyncSession, strat: RecoveryStrategy) -> int:
     fn = (
-        await db.execute(
-            select(BusinessFunction).where(BusinessFunction.id == strat.function_id)
-        )
+        await db.execute(select(BusinessFunction).where(BusinessFunction.id == strat.function_id))
     ).scalar_one()
     text = (
         f"Function: {fn.name}\n"
@@ -255,13 +244,9 @@ async def index_exercise_evaluation(db: AsyncSession, ex: Exercise) -> int:
     )
 
 
-async def index_vendor_assessment(
-    db: AsyncSession, assessment: VendorAssessment
-) -> int:
+async def index_vendor_assessment(db: AsyncSession, assessment: VendorAssessment) -> int:
     vendor = (
-        await db.execute(
-            select(Vendor).where(Vendor.id == assessment.vendor_id)
-        )
+        await db.execute(select(Vendor).where(Vendor.id == assessment.vendor_id))
     ).scalar_one()
     text = (
         f"Vendor: {vendor.name} ({vendor.tier})\n"
@@ -278,18 +263,18 @@ async def index_vendor_assessment(
     )
 
 
-async def index_communication_plan(
-    db: AsyncSession, plan: CommunicationPlan
-) -> int:
+async def index_communication_plan(db: AsyncSession, plan: CommunicationPlan) -> int:
     """One chunk per template body, plus a summary chunk."""
 
     templates = (
-        await db.execute(
-            select(CommunicationTemplate).where(
-                CommunicationTemplate.plan_id == plan.id
+        (
+            await db.execute(
+                select(CommunicationTemplate).where(CommunicationTemplate.plan_id == plan.id)
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     chunks: list[Chunk] = [
         Chunk(
@@ -314,9 +299,7 @@ async def index_communication_plan(
 
 
 async def index_it_dr_plan(db: AsyncSession, plan: ITDRPlan) -> int:
-    sys = (
-        await db.execute(select(ITSystem).where(ITSystem.id == plan.system_id))
-    ).scalar_one()
+    sys = (await db.execute(select(ITSystem).where(ITSystem.id == plan.system_id))).scalar_one()
     text = (
         f"System: {sys.name} ({sys.tier.value})\n"
         f"RTO: {sys.rto_minutes}m / RPO: {sys.rpo_minutes}m\n"
@@ -331,13 +314,9 @@ async def index_it_dr_plan(db: AsyncSession, plan: ITDRPlan) -> int:
     )
 
 
-async def index_supply_chain_assessment(
-    db: AsyncSession, assessment: SupplyChainAssessment
-) -> int:
+async def index_supply_chain_assessment(db: AsyncSession, assessment: SupplyChainAssessment) -> int:
     supplier = (
-        await db.execute(
-            select(Supplier).where(Supplier.id == assessment.supplier_id)
-        )
+        await db.execute(select(Supplier).where(Supplier.id == assessment.supplier_id))
     ).scalar_one()
     text = (
         f"Supplier: {supplier.name} ({supplier.criticality})\n"
@@ -355,9 +334,7 @@ async def index_supply_chain_assessment(
     )
 
 
-async def index_regulatory_report(
-    db: AsyncSession, report: RegulatoryReport
-) -> int:
+async def index_regulatory_report(db: AsyncSession, report: RegulatoryReport) -> int:
     sections = report.content.get("sections") or []
     chunks: list[Chunk] = [
         Chunk(
@@ -382,11 +359,7 @@ async def index_regulatory_report(
 
 async def index_work_area_plan(db: AsyncSession, plan: WorkAreaPlan) -> int:
     fn = (
-        await db.execute(
-            select(BusinessFunction).where(
-                BusinessFunction.id == plan.function_id
-            )
-        )
+        await db.execute(select(BusinessFunction).where(BusinessFunction.id == plan.function_id))
     ).scalar_one()
     text = (
         f"Function: {fn.name}\n"

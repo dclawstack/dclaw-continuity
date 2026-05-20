@@ -61,9 +61,9 @@ async def upload_attachment(
     except StorageUnavailable as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
-        )
+        ) from exc
     except ValueError as exc:
-        raise HTTPException(status_code=413, detail=str(exc))
+        raise HTTPException(status_code=413, detail=str(exc)) from exc
     return record
 
 
@@ -83,11 +83,11 @@ async def get_attachment_url(
     try:
         url, ttl = await attachment_service.presigned_url(bcp, attachment_id)
     except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="attachment not found")
+        raise HTTPException(status_code=404, detail="attachment not found") from None
     except StorageUnavailable as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
-        )
+        ) from exc
     return AttachmentUrl(url=url, expires_in=ttl)
 
 
@@ -105,12 +105,10 @@ async def delete_attachment(
     if bcp is None:
         raise HTTPException(status_code=404, detail="bcp not found")
     try:
-        removed = await attachment_service.delete_attachment(
-            db, bcp, attachment_id
-        )
+        removed = await attachment_service.delete_attachment(db, bcp, attachment_id)
     except StorageUnavailable as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
-        )
+        ) from exc
     if not removed:
         raise HTTPException(status_code=404, detail="attachment not found")

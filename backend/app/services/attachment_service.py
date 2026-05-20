@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,7 +20,7 @@ async def upload_attachment(
     content_type: str,
     data: bytes,
     uploaded_by: str,
-    storage: Optional[ObjectStorage] = None,
+    storage: ObjectStorage | None = None,
 ) -> dict:
     storage = storage or get_storage()
     if storage is None:
@@ -29,8 +28,7 @@ async def upload_attachment(
 
     if len(data) > settings.s3_max_upload_bytes:
         raise ValueError(
-            f"file too large: {len(data)} bytes > "
-            f"{settings.s3_max_upload_bytes} byte limit"
+            f"file too large: {len(data)} bytes > {settings.s3_max_upload_bytes} byte limit"
         )
 
     attachment_id = uuid.uuid4()
@@ -43,7 +41,7 @@ async def upload_attachment(
         "filename": filename,
         "content_type": content_type or "application/octet-stream",
         "size": len(data),
-        "uploaded_at": datetime.now(timezone.utc).isoformat(),
+        "uploaded_at": datetime.now(UTC).isoformat(),
         "uploaded_by": uploaded_by,
     }
     bcp.attachments = (bcp.attachments or []) + [record]
@@ -57,14 +55,14 @@ async def delete_attachment(
     bcp: BCP,
     attachment_id: str,
     *,
-    storage: Optional[ObjectStorage] = None,
+    storage: ObjectStorage | None = None,
 ) -> bool:
     storage = storage or get_storage()
     if storage is None:
         raise StorageUnavailable("object storage is not configured")
 
     keep: list = []
-    target: Optional[dict] = None
+    target: dict | None = None
     for att in bcp.attachments or []:
         if att.get("id") == attachment_id:
             target = att
@@ -84,7 +82,7 @@ async def presigned_url(
     bcp: BCP,
     attachment_id: str,
     *,
-    storage: Optional[ObjectStorage] = None,
+    storage: ObjectStorage | None = None,
 ) -> tuple[str, int]:
     storage = storage or get_storage()
     if storage is None:

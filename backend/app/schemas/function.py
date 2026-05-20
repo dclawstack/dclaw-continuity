@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -23,12 +22,12 @@ class FunctionCreate(FunctionBase):
 
 
 class FunctionUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    owner: Optional[str] = None
-    criticality: Optional[Criticality] = None
-    rto_minutes: Optional[int] = None
-    rpo_minutes: Optional[int] = None
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = None
+    owner: str | None = None
+    criticality: Criticality | None = None
+    rto_minutes: int | None = None
+    rpo_minutes: int | None = None
 
 
 class FunctionRead(FunctionBase):

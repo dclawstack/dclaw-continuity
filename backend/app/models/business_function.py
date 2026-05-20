@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from app.models.recovery_strategy import RecoveryStrategy
 
 
-class Criticality(str, enum.Enum):
+class Criticality(enum.StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -29,9 +29,7 @@ class Criticality(str, enum.Enum):
 class BusinessFunction(Base, TimestampMixin):
     __tablename__ = "business_functions"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, default=new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=new_uuid)
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     description: Mapped[str] = mapped_column(Text, default="", nullable=False)
     owner: Mapped[str] = mapped_column(String(255), default="", nullable=False)
@@ -49,17 +47,15 @@ class BusinessFunction(Base, TimestampMixin):
     rto_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     rpo_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    bcps: Mapped[list["BCP"]] = relationship(
-        back_populates="function", cascade="all, delete-orphan"
-    )
-    dependencies: Mapped[list["Dependency"]] = relationship(
+    bcps: Mapped[list[BCP]] = relationship(back_populates="function", cascade="all, delete-orphan")
+    dependencies: Mapped[list[Dependency]] = relationship(
         back_populates="function",
         cascade="all, delete-orphan",
         foreign_keys="Dependency.function_id",
     )
-    impact_assessments: Mapped[list["ImpactAssessment"]] = relationship(
+    impact_assessments: Mapped[list[ImpactAssessment]] = relationship(
         back_populates="function", cascade="all, delete-orphan"
     )
-    recovery_strategies: Mapped[list["RecoveryStrategy"]] = relationship(
+    recovery_strategies: Mapped[list[RecoveryStrategy]] = relationship(
         back_populates="function", cascade="all, delete-orphan"
     )

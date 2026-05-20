@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
 import jwt
@@ -43,7 +42,7 @@ def issue_token(user: User) -> tuple[str, int]:
     """Returns (jwt, expires_in_seconds)."""
 
     ttl = settings.access_token_expire_minutes * 60
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload = {
         "sub": str(user.id),
         "email": user.email,
@@ -78,12 +77,8 @@ async def signup(db: AsyncSession, payload: SignupRequest) -> User:
     return user
 
 
-async def authenticate(
-    db: AsyncSession, email: str, password: str
-) -> User:
-    user = (
-        await db.execute(select(User).where(User.email == email.lower()))
-    ).scalar_one_or_none()
+async def authenticate(db: AsyncSession, email: str, password: str) -> User:
+    user = (await db.execute(select(User).where(User.email == email.lower()))).scalar_one_or_none()
     if user is None or not user.is_active:
         raise InvalidCredentials("user not found or inactive")
     if not verify_password(password, user.hashed_password):
@@ -91,9 +86,5 @@ async def authenticate(
     return user
 
 
-async def get_user_by_id(
-    db: AsyncSession, user_id: uuid.UUID
-) -> Optional[User]:
-    return (
-        await db.execute(select(User).where(User.id == user_id))
-    ).scalar_one_or_none()
+async def get_user_by_id(db: AsyncSession, user_id: uuid.UUID) -> User | None:
+    return (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()

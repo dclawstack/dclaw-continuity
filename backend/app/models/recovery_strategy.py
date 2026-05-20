@@ -7,7 +7,8 @@ import uuid
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Enum, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, new_uuid
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from app.models.business_function import BusinessFunction
 
 
-class StrategyKind(str, enum.Enum):
+class StrategyKind(enum.StrEnum):
     HOT_SITE = "hot_site"
     WARM_SITE = "warm_site"
     COLD_SITE = "cold_site"
@@ -30,9 +31,7 @@ class StrategyKind(str, enum.Enum):
 class RecoveryStrategy(Base, TimestampMixin):
     __tablename__ = "recovery_strategies"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, default=new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=new_uuid)
     function_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("business_functions.id", ondelete="CASCADE"),
@@ -58,6 +57,4 @@ class RecoveryStrategy(Base, TimestampMixin):
 
     details: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
-    function: Mapped["BusinessFunction"] = relationship(
-        back_populates="recovery_strategies"
-    )
+    function: Mapped[BusinessFunction] = relationship(back_populates="recovery_strategies")

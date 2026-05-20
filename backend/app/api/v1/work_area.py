@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,9 +27,7 @@ async def list_sites(
     return await work_area_service.list_sites(db)
 
 
-@router.post(
-    "/sites/", response_model=WorkAreaSiteRead, status_code=status.HTTP_201_CREATED
-)
+@router.post("/sites/", response_model=WorkAreaSiteRead, status_code=status.HTTP_201_CREATED)
 async def create_site(
     payload: WorkAreaSiteCreate,
     db: AsyncSession = Depends(get_db),
@@ -66,7 +63,7 @@ async def delete_site(
 
 @router.get("/plans/", response_model=list[WorkAreaPlanRead])
 async def list_plans(
-    function_id: Optional[uuid.UUID] = Query(default=None),
+    function_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     _: CurrentUser = Depends(get_current_user),
 ):

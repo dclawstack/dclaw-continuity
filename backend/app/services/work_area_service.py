@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +22,7 @@ async def list_sites(db: AsyncSession) -> list[WorkAreaSite]:
     return list(result.scalars().all())
 
 
-async def get_site(db: AsyncSession, site_id: uuid.UUID) -> Optional[WorkAreaSite]:
+async def get_site(db: AsyncSession, site_id: uuid.UUID) -> WorkAreaSite | None:
     return (
         await db.execute(select(WorkAreaSite).where(WorkAreaSite.id == site_id))
     ).scalar_one_or_none()
@@ -52,16 +51,14 @@ async def delete_site(db: AsyncSession, site: WorkAreaSite) -> None:
     await db.commit()
 
 
-async def list_plans(
-    db: AsyncSession, function_id: Optional[uuid.UUID] = None
-) -> list[WorkAreaPlan]:
+async def list_plans(db: AsyncSession, function_id: uuid.UUID | None = None) -> list[WorkAreaPlan]:
     stmt = select(WorkAreaPlan).order_by(WorkAreaPlan.created_at.desc())
     if function_id is not None:
         stmt = stmt.where(WorkAreaPlan.function_id == function_id)
     return list((await db.execute(stmt)).scalars().all())
 
 
-async def get_plan(db: AsyncSession, plan_id: uuid.UUID) -> Optional[WorkAreaPlan]:
+async def get_plan(db: AsyncSession, plan_id: uuid.UUID) -> WorkAreaPlan | None:
     return (
         await db.execute(select(WorkAreaPlan).where(WorkAreaPlan.id == plan_id))
     ).scalar_one_or_none()
@@ -71,7 +68,7 @@ async def recommend_plan(
     db: AsyncSession,
     function: BusinessFunction,
     request: WorkAreaPlanRequest,
-    llm: Optional[LLMClient] = None,
+    llm: LLMClient | None = None,
 ) -> WorkAreaPlan:
     """AI-recommends how to fill the function's headcount from available sites."""
 

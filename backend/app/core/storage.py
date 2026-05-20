@@ -7,8 +7,8 @@ silently, because attachments are user-visible data.
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, Optional
 
 import aioboto3
 from botocore.config import Config
@@ -85,9 +85,7 @@ class ObjectStorage:
             except (BotoCoreError, ClientError) as exc:
                 raise StorageUnavailable(f"delete_object: {exc}") from exc
 
-    async def presigned_get_url(
-        self, key: str, expires_in: Optional[int] = None
-    ) -> str:
+    async def presigned_get_url(self, key: str, expires_in: int | None = None) -> str:
         ttl = expires_in or settings.s3_presigned_url_ttl_seconds
         async with self._client() as client:
             try:
@@ -100,10 +98,10 @@ class ObjectStorage:
                 raise StorageUnavailable(f"presigned_get_url: {exc}") from exc
 
 
-_singleton: Optional[ObjectStorage] = None
+_singleton: ObjectStorage | None = None
 
 
-def get_storage() -> Optional[ObjectStorage]:
+def get_storage() -> ObjectStorage | None:
     """Return the shared storage client, or None if disabled.
 
     Storage is considered disabled when both `s3_endpoint_url` and

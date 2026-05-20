@@ -14,9 +14,7 @@ class Settings(BaseSettings):
     app_env: str = "dev"
     debug: bool = True
 
-    database_url: str = (
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/dclaw_continuity"
-    )
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/dclaw_continuity"
 
     # Auth — JWT-signed sessions with bcrypt-hashed passwords.
     # AUTH_DEV_MODE accepts DEV_AUTH_TOKEN as a bypass; useful in tests/dev.
@@ -58,7 +56,7 @@ class Settings(BaseSettings):
     s3_max_upload_bytes: int = 20 * 1024 * 1024  # 20 MB
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     return Settings()
 

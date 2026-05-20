@@ -54,16 +54,10 @@ async def test_system_crud_and_generate_plan(authed_client, fake_llm):
 
 @pytest.mark.asyncio
 async def test_record_test(authed_client, fake_llm):
-    sys = (
-        await authed_client.post(
-            "/api/v1/it-dr/systems/", json={"name": "Cache"}
-        )
-    ).json()
+    sys = (await authed_client.post("/api/v1/it-dr/systems/", json={"name": "Cache"})).json()
     fake_llm.json_response = {"title": "Plan", "test_plan": []}
     plan = (
-        await authed_client.post(
-            "/api/v1/it-dr/plans/generate", json={"system_id": sys["id"]}
-        )
+        await authed_client.post("/api/v1/it-dr/plans/generate", json={"system_id": sys["id"]})
     ).json()
     r = await authed_client.post(
         f"/api/v1/it-dr/plans/{plan['id']}/test-record",

@@ -1,0 +1,32 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = [
+    ".venv",
+    "alembic/versions",  # generated migrations
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes (unused imports, undefined names)
+    "W",    # pycodestyle warnings
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long — formatter handles this
+    "B008",  # function calls in defaults — FastAPI Depends() needs this
+    "SIM117", # nested with — sometimes clearer than combined
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["B017", "B018"]  # tests sometimes use bare asserts/exceptions
+"app/models/__init__.py" = ["F401"]  # re-exports for SQLAlchemy autogenerate
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

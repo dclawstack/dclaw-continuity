@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +17,7 @@ async def list_vendors(db: AsyncSession) -> list[Vendor]:
     return list(result.scalars().all())
 
 
-async def get_vendor(db: AsyncSession, vendor_id: uuid.UUID) -> Optional[Vendor]:
+async def get_vendor(db: AsyncSession, vendor_id: uuid.UUID) -> Vendor | None:
     result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
     return result.scalar_one_or_none()
 
@@ -45,7 +44,7 @@ async def delete_vendor(db: AsyncSession, v: Vendor) -> None:
 
 
 async def list_assessments(
-    db: AsyncSession, vendor_id: Optional[uuid.UUID] = None
+    db: AsyncSession, vendor_id: uuid.UUID | None = None
 ) -> list[VendorAssessment]:
     stmt = select(VendorAssessment).order_by(VendorAssessment.created_at.desc())
     if vendor_id is not None:
@@ -58,7 +57,7 @@ async def assess_vendor(
     db: AsyncSession,
     vendor: Vendor,
     request: VendorAssessRequest,
-    llm: Optional[LLMClient] = None,
+    llm: LLMClient | None = None,
 ) -> VendorAssessment:
     """Run AI continuity scoring against the vendor and persist a new assessment."""
 

@@ -1,21 +1,24 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.business_function import BusinessFunction
 from app.models.recovery_strategy import RecoveryStrategy, StrategyKind
-from app.schemas.recovery import RecoveryRecommendRequest, RecoveryStrategyCreate, RecoveryStrategyUpdate
+from app.schemas.recovery import (
+    RecoveryRecommendRequest,
+    RecoveryStrategyCreate,
+    RecoveryStrategyUpdate,
+)
 from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import COPILOT_SYSTEM_PROMPT, RECOVERY_RECOMMENDATION_PROMPT
 
 
 async def list_strategies(
-    db: AsyncSession, function_id: Optional[uuid.UUID] = None
+    db: AsyncSession, function_id: uuid.UUID | None = None
 ) -> list[RecoveryStrategy]:
     stmt = select(RecoveryStrategy).order_by(RecoveryStrategy.created_at.desc())
     if function_id is not None:
@@ -24,18 +27,12 @@ async def list_strategies(
     return list(result.scalars().all())
 
 
-async def get_strategy(
-    db: AsyncSession, strategy_id: uuid.UUID
-) -> Optional[RecoveryStrategy]:
-    result = await db.execute(
-        select(RecoveryStrategy).where(RecoveryStrategy.id == strategy_id)
-    )
+async def get_strategy(db: AsyncSession, strategy_id: uuid.UUID) -> RecoveryStrategy | None:
+    result = await db.execute(select(RecoveryStrategy).where(RecoveryStrategy.id == strategy_id))
     return result.scalar_one_or_none()
 
 
-async def create_strategy(
-    db: AsyncSession, payload: RecoveryStrategyCreate
-) -> RecoveryStrategy:
+async def create_strategy(db: AsyncSession, payload: RecoveryStrategyCreate) -> RecoveryStrategy:
     strat = RecoveryStrategy(**payload.model_dump())
     db.add(strat)
     await db.commit()
@@ -62,7 +59,7 @@ async def recommend_strategies(
     db: AsyncSession,
     function: BusinessFunction,
     request: RecoveryRecommendRequest,
-    llm: Optional[LLMClient] = None,
+    llm: LLMClient | None = None,
 ) -> list[RecoveryStrategy]:
     """Generate 3 AI-recommended strategies and persist them."""
 

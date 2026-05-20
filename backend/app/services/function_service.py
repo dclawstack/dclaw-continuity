@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,10 +14,8 @@ async def list_functions(db: AsyncSession) -> list[BusinessFunction]:
     return list(result.scalars().all())
 
 
-async def get_function(db: AsyncSession, function_id: uuid.UUID) -> Optional[BusinessFunction]:
-    result = await db.execute(
-        select(BusinessFunction).where(BusinessFunction.id == function_id)
-    )
+async def get_function(db: AsyncSession, function_id: uuid.UUID) -> BusinessFunction | None:
+    result = await db.execute(select(BusinessFunction).where(BusinessFunction.id == function_id))
     return result.scalar_one_or_none()
 
 

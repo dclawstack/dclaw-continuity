@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from typing import Optional
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -23,12 +22,12 @@ _bearer = HTTPBearer(auto_error=False)
 @dataclass(frozen=True)
 class CurrentUser:
     sub: str
-    email: Optional[str] = None
+    email: str | None = None
     is_superuser: bool = False
     is_dev: bool = False
 
     @property
-    def user_id(self) -> Optional[uuid.UUID]:
+    def user_id(self) -> uuid.UUID | None:
         try:
             return uuid.UUID(self.sub)
         except (ValueError, TypeError):
@@ -36,7 +35,7 @@ class CurrentUser:
 
 
 async def get_current_user(
-    creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
+    creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> CurrentUser:
     if creds is None:
         raise HTTPException(
@@ -61,19 +60,17 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="token expired",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
     except jwt.InvalidTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="invalid token",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
 
     sub = payload.get("sub")
     if not sub:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid token claims"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid token claims")
 
     return CurrentUser(
         sub=sub,

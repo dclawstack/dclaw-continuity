@@ -67,9 +67,7 @@ def configure_logging() -> None:
 
     # Quiet down noisy libraries unless we're explicitly debugging.
     for noisy in ("sqlalchemy.engine", "asyncpg", "httpx"):
-        logging.getLogger(noisy).setLevel(
-            logging.DEBUG if settings.debug else logging.WARNING
-        )
+        logging.getLogger(noisy).setLevel(logging.DEBUG if settings.debug else logging.WARNING)
 
 
 def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:

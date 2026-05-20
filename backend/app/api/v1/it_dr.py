@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,9 +31,7 @@ async def list_systems(
     return await it_dr_service.list_systems(db)
 
 
-@router.post(
-    "/systems/", response_model=ITSystemRead, status_code=status.HTTP_201_CREATED
-)
+@router.post("/systems/", response_model=ITSystemRead, status_code=status.HTTP_201_CREATED)
 async def create_system(
     payload: ITSystemCreate,
     db: AsyncSession = Depends(get_db),
@@ -85,7 +82,7 @@ async def delete_system(
 
 @router.get("/plans/", response_model=list[ITDRPlanRead])
 async def list_plans(
-    system_id: Optional[uuid.UUID] = Query(default=None),
+    system_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     _: CurrentUser = Depends(get_current_user),
 ):
@@ -105,9 +102,7 @@ async def generate_plan(
     sys = await it_dr_service.get_system(db, payload.system_id)
     if sys is None:
         raise HTTPException(status_code=404, detail="system not found")
-    return await it_dr_service.generate_plan(
-        db, sys, additional_context=payload.additional_context
-    )
+    return await it_dr_service.generate_plan(db, sys, additional_context=payload.additional_context)
 
 
 @router.post("/plans/{plan_id}/test-record", response_model=ITDRPlanRead)

@@ -15,14 +15,10 @@ async def test_bcp_creation_indexes_chunk(authed_client, fake_llm):
         "title": "Payments BCP",
         "summary": "Plan for card processing outage",
         "objectives": ["restore within 60m"],
-        "procedures": [
-            {"step": 1, "action": "activate", "owner": "ops", "duration_minutes": 5}
-        ],
+        "procedures": [{"step": 1, "action": "activate", "owner": "ops", "duration_minutes": 5}],
     }
     fn = await _create_fn(authed_client)
-    gen = await authed_client.post(
-        "/api/v1/bcps/generate", json={"function_id": fn["id"]}
-    )
+    gen = await authed_client.post("/api/v1/bcps/generate", json={"function_id": fn["id"]})
     assert gen.status_code == 201
 
     # Knowledge-chunks row should exist now
@@ -50,9 +46,7 @@ async def test_copilot_uses_rag_results(authed_client, fake_llm):
         "procedures": [],
     }
     fn = await _create_fn(authed_client, name="Logistics", criticality="high")
-    await authed_client.post(
-        "/api/v1/bcps/generate", json={"function_id": fn["id"]}
-    )
+    await authed_client.post("/api/v1/bcps/generate", json={"function_id": fn["id"]})
 
     fake_llm.text_response = "Based on the existing plan, you should rehearse it."
     resp = await authed_client.post(
@@ -78,8 +72,6 @@ async def test_chat_works_when_no_chunks_indexed(authed_client, fake_llm):
     """RAG returns 0 hits → Copilot still answers."""
 
     fake_llm.text_response = "Sure, here's general guidance."
-    resp = await authed_client.post(
-        "/api/v1/copilot/chat", json={"message": "give me an overview"}
-    )
+    resp = await authed_client.post("/api/v1/copilot/chat", json={"message": "give me an overview"})
     assert resp.status_code == 200
     assert "general guidance" in resp.json()["reply"]

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,9 +19,7 @@ from app.services import auth_service
 router = APIRouter()
 
 
-@router.post(
-    "/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def signup(
     payload: SignupRequest,
     db: AsyncSession = Depends(get_db),
@@ -32,7 +30,7 @@ async def signup(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="email already registered",
-        )
+        ) from None
     token, ttl = auth_service.issue_token(user)
     return TokenResponse(
         access_token=token,
@@ -52,7 +50,7 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="invalid email or password",
-        )
+        ) from None
     token, ttl = auth_service.issue_token(user)
     return TokenResponse(
         access_token=token,
@@ -74,11 +72,9 @@ async def me(
             email=current.email or "dev@local",
             is_active=True,
             is_superuser=False,
-            created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            created_at=datetime(2026, 1, 1, tzinfo=UTC),
         )
     user = await auth_service.get_user_by_id(db, user_id)
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="user not found"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user not found")
     return user

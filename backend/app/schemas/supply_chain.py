@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -21,12 +21,12 @@ class SupplierCreate(SupplierBase):
 
 
 class SupplierUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    category: Optional[str] = None
-    region: Optional[str] = None
-    criticality: Optional[str] = None
-    description: Optional[str] = None
-    alternatives: Optional[list[str]] = None
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    category: str | None = None
+    region: str | None = None
+    criticality: str | None = None
+    description: str | None = None
+    alternatives: list[str] | None = None
 
 
 class SupplierRead(SupplierBase):

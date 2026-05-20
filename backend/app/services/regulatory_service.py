@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,23 +24,15 @@ from app.services.prompts import COPILOT_SYSTEM_PROMPT, REGULATORY_REPORT_PROMPT
 
 async def list_reports(db: AsyncSession) -> list[RegulatoryReport]:
     return list(
-        (
-            await db.execute(
-                select(RegulatoryReport).order_by(RegulatoryReport.created_at.desc())
-            )
-        )
+        (await db.execute(select(RegulatoryReport).order_by(RegulatoryReport.created_at.desc())))
         .scalars()
         .all()
     )
 
 
-async def get_report(
-    db: AsyncSession, report_id: uuid.UUID
-) -> Optional[RegulatoryReport]:
+async def get_report(db: AsyncSession, report_id: uuid.UUID) -> RegulatoryReport | None:
     return (
-        await db.execute(
-            select(RegulatoryReport).where(RegulatoryReport.id == report_id)
-        )
+        await db.execute(select(RegulatoryReport).where(RegulatoryReport.id == report_id))
     ).scalar_one_or_none()
 
 
@@ -63,7 +54,7 @@ async def delete_report(db: AsyncSession, report: RegulatoryReport) -> None:
 async def generate_report(
     db: AsyncSession,
     request: RegulatoryReportGenerateRequest,
-    llm: Optional[LLMClient] = None,
+    llm: LLMClient | None = None,
 ) -> RegulatoryReport:
     """Auto-populate a regulator-facing continuity report from workspace state."""
 
@@ -89,9 +80,7 @@ async def generate_report(
         framework=request.framework,
         period=request.period,
         title=str(result.get("title") or f"{request.framework} — {request.period}"),
-        status=(
-            ReportStatus.VALIDATED if validation["complete"] else ReportStatus.DRAFT
-        ),
+        status=(ReportStatus.VALIDATED if validation["complete"] else ReportStatus.DRAFT),
         content=result,
         validation=validation,
     )
@@ -124,25 +113,15 @@ async def submit_report(
 async def _build_evidence_snapshot(db: AsyncSession) -> dict:
     """Aggregate counts + recent items so the LLM has concrete evidence to cite."""
 
-    fn_count = (
-        await db.execute(select(func.count(BusinessFunction.id)))
-    ).scalar() or 0
+    fn_count = (await db.execute(select(func.count(BusinessFunction.id)))).scalar() or 0
     bcp_count = (await db.execute(select(func.count(BCP.id)))).scalar() or 0
-    ia_count = (
-        await db.execute(select(func.count(ImpactAssessment.id)))
-    ).scalar() or 0
-    rs_count = (
-        await db.execute(select(func.count(RecoveryStrategy.id)))
-    ).scalar() or 0
+    ia_count = (await db.execute(select(func.count(ImpactAssessment.id)))).scalar() or 0
+    rs_count = (await db.execute(select(func.count(RecoveryStrategy.id)))).scalar() or 0
     ex_count = (await db.execute(select(func.count(Exercise.id)))).scalar() or 0
     vendor_count = (await db.execute(select(func.count(Vendor.id)))).scalar() or 0
 
     recent_exercises = list(
-        (
-            await db.execute(
-                select(Exercise).order_by(Exercise.created_at.desc()).limit(5)
-            )
-        )
+        (await db.execute(select(Exercise).order_by(Exercise.created_at.desc()).limit(5)))
         .scalars()
         .all()
     )

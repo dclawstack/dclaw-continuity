@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,16 +20,14 @@ router = APIRouter()
 
 @router.get("/", response_model=list[RecoveryStrategyRead])
 async def list_strategies(
-    function_id: Optional[uuid.UUID] = Query(default=None),
+    function_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     _: CurrentUser = Depends(get_current_user),
 ):
     return await recovery_service.list_strategies(db, function_id=function_id)
 
 
-@router.post(
-    "/", response_model=RecoveryStrategyRead, status_code=status.HTTP_201_CREATED
-)
+@router.post("/", response_model=RecoveryStrategyRead, status_code=status.HTTP_201_CREATED)
 async def create_strategy(
     payload: RecoveryStrategyCreate,
     db: AsyncSession = Depends(get_db),

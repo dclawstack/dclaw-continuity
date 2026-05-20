@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +19,7 @@ from app.services.prompts import COMMUNICATION_PLAN_PROMPT, COPILOT_SYSTEM_PROMP
 
 
 async def list_plans(
-    db: AsyncSession, function_id: Optional[uuid.UUID] = None
+    db: AsyncSession, function_id: uuid.UUID | None = None
 ) -> list[CommunicationPlan]:
     stmt = (
         select(CommunicationPlan)
@@ -33,9 +32,7 @@ async def list_plans(
     return list(result.scalars().all())
 
 
-async def get_plan(
-    db: AsyncSession, plan_id: uuid.UUID
-) -> Optional[CommunicationPlan]:
+async def get_plan(db: AsyncSession, plan_id: uuid.UUID) -> CommunicationPlan | None:
     result = await db.execute(
         select(CommunicationPlan)
         .options(selectinload(CommunicationPlan.templates))
@@ -44,9 +41,7 @@ async def get_plan(
     return result.scalar_one_or_none()
 
 
-async def create_plan(
-    db: AsyncSession, payload: CommunicationPlanCreate
-) -> CommunicationPlan:
+async def create_plan(db: AsyncSession, payload: CommunicationPlanCreate) -> CommunicationPlan:
     plan = CommunicationPlan(**payload.model_dump())
     db.add(plan)
     await db.commit()
@@ -75,7 +70,7 @@ async def draft_plan(
     db: AsyncSession,
     function: BusinessFunction,
     request: CommunicationDraftRequest,
-    llm: Optional[LLMClient] = None,
+    llm: LLMClient | None = None,
 ) -> CommunicationPlan:
     """AI-drafts a multi-channel communication plan for a scenario + audience."""
 
