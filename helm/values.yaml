@@ -102,3 +102,39 @@ minio:
     limits:
       cpu: 1
       memory: 1Gi
+
+# Prometheus + Grafana observability stack.
+# If your cluster already runs kube-prometheus-stack or similar, set
+# both prometheus.enabled and grafana.enabled to false — the backend
+# still exposes /metrics for any external Prometheus to scrape.
+monitoring:
+  prometheus:
+    enabled: true
+    image: prom/prometheus:v2.54.0
+    retention: 15d
+    storage:
+      size: 10Gi
+      storageClass: ""
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
+  grafana:
+    enabled: true
+    image: grafana/grafana:11.2.0
+    # CHANGE THESE in production via --set or sealed secret.
+    adminUser: admin
+    adminPassword: admin
+    storage:
+      size: 2Gi
+      storageClass: ""
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
