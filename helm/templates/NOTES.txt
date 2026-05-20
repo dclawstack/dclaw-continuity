@@ -1,4 +1,23 @@
-DClaw App deployed!
+DClaw Continuity deployed.
 
-Backend: {{ include "dclaw-app.fullname" . }}-backend
+Backend:  {{ include "dclaw-app.fullname" . }}-backend
 Frontend: {{ include "dclaw-app.fullname" . }}-frontend
+{{- if .Values.cnpg.enabled }}
+Postgres: {{ include "dclaw-app.fullname" . }}-pg ({{ .Values.cnpg.instances }} instance(s), pgvector enabled)
+
+The CNPG operator auto-generates a Secret named
+`{{ include "dclaw-app.fullname" . }}-pg-app` with `uri`, `username`, and
+`password` keys. Wire your backend Deployment to use:
+
+  envFrom:
+    - secretRef:
+        name: {{ include "dclaw-app.fullname" . }}-pg-app
+    - secretRef:
+        name: {{ include "dclaw-app.fullname" . }}-secrets
+{{- else }}
+Postgres: bring your own — set DATABASE_URL in the secret manually.
+{{- end }}
+
+Verify pgvector + run migrations:
+  kubectl exec -it deployment/{{ include "dclaw-app.fullname" . }}-backend -- \
+    alembic upgrade head
