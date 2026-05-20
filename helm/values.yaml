@@ -66,3 +66,19 @@ cnpg:
   monitoring:
     enablePodMonitor: false
   backup: {}
+
+# In-cluster Redis for the embedding cache.
+# Disable and point REDIS_URL at a managed Redis if you have one.
+redis:
+  enabled: true
+  image: redis:7-alpine
+  storage:
+    size: 1Gi
+    storageClass: ""
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
