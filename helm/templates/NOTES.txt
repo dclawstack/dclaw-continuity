@@ -37,3 +37,35 @@ Ingress: https://{{ .Values.ingress.host }}
 Ingress is disabled. Set `ingress.enabled=true` and `ingress.host=...` to
 expose the app publicly. Don't forget TLS (`ingress.tls.enabled=true`) for prod.
 {{- end }}
+
+{{- $warn := list }}
+{{- if not .Values.auth.existingSecret }}
+  {{- if eq .Values.auth.authDevMode "true" }}
+    {{- $warn = append $warn "AUTH_DEV_MODE=true — DEV_AUTH_TOKEN bypasses real auth. Override `auth.authDevMode=false` for prod." }}
+  {{- end }}
+  {{- if hasPrefix "change-me" .Values.auth.secretKey }}
+    {{- $warn = append $warn "SECRET_KEY is still the dev default. Generate a real one (`python -c \"import secrets; print(secrets.token_urlsafe(48))\"`) and pass via --set, or use auth.existingSecret." }}
+  {{- end }}
+{{- end }}
+{{- if and .Values.minio.enabled (eq .Values.minio.rootUser "minioadmin") (eq .Values.minio.rootPassword "minioadmin") }}
+  {{- $warn = append $warn "MinIO is using the default minioadmin/minioadmin credentials. Override minio.rootUser and minio.rootPassword for prod." }}
+{{- end }}
+{{- if and .Values.monitoring.grafana.enabled (eq .Values.monitoring.grafana.adminPassword "admin") }}
+  {{- $warn = append $warn "Grafana admin password is still 'admin'. Override monitoring.grafana.adminPassword for prod." }}
+{{- end }}
+{{- if .Values.cnpg.enabled }}
+  {{- if hasPrefix "ghcr.io/dclawstack/cnpg-pgvector" .Values.cnpg.image }}
+    {{- $warn = append $warn (printf "CNPG image %s is a placeholder. Build your own pgvector-enabled CNPG image (FROM ghcr.io/cloudnative-pg/postgresql:16 RUN apt-get install postgresql-16-pgvector) and set cnpg.image to it." .Values.cnpg.image) }}
+  {{- end }}
+{{- end }}
+
+{{- if $warn }}
+
+=========================================================================
+⚠ PRE-FLIGHT WARNINGS — fix these before treating this as a real deploy:
+{{- range $i, $msg := $warn }}
+
+  {{ add $i 1 }}. {{ $msg }}
+{{- end }}
+=========================================================================
+{{- end }}
