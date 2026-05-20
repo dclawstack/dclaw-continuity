@@ -82,3 +82,23 @@ redis:
     limits:
       cpu: 500m
       memory: 256Mi
+
+# In-cluster MinIO for object storage (BCP attachments).
+# Disable and set S3_* env vars to use AWS S3 / a managed provider instead.
+minio:
+  enabled: true
+  image: minio/minio:latest
+  # CHANGE THESE in production via --set or sealed secret.
+  rootUser: minioadmin
+  rootPassword: minioadmin
+  bucket: dclaw-continuity
+  storage:
+    size: 10Gi
+    storageClass: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
