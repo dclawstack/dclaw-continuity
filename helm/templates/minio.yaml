@@ -1,0 +1,127 @@
+{{- if .Values.minio.enabled }}
+{{- /*
+Minimal single-node MinIO for object storage (BCP attachments + future
+report exports). Adequate for dev/staging; for prod-scale use MinIO
+Operator / managed S3 and set .Values.minio.enabled=false.
+
+Secrets are read from <fullname>-minio-credentials below — replace the
+default minioadmin/minioadmin in production via --set or a SealedSecret.
+*/}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "dclaw-app.fullname" . }}-minio-credentials
+  labels:
+    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: object-storage
+type: Opaque
+stringData:
+  MINIO_ROOT_USER: {{ .Values.minio.rootUser | quote }}
+  MINIO_ROOT_PASSWORD: {{ .Values.minio.rootPassword | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "dclaw-app.fullname" . }}-minio
+  labels:
+    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: object-storage
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.minio.storage.size | quote }}
+  {{- with .Values.minio.storage.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dclaw-app.fullname" . }}-minio
+  labels:
+    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: object-storage
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: object-storage
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: object-storage
+    spec:
+      containers:
+        - name: minio
+          image: {{ .Values.minio.image | quote }}
+          args:
+            - server
+            - /data
+            - --console-address
+            - ":9001"
+          envFrom:
+            - secretRef:
+                name: {{ include "dclaw-app.fullname" . }}-minio-credentials
+          ports:
+            - containerPort: 9000
+              name: s3
+            - containerPort: 9001
+              name: console
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          {{- with .Values.minio.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "dclaw-app.fullname" . }}-minio
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "dclaw-app.fullname" . }}-minio
+  labels:
+    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: object-storage
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9000
+      targetPort: 9000
+      protocol: TCP
+      name: s3
+    - port: 9001
+      targetPort: 9001
+      protocol: TCP
+      name: console
+  selector:
+    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: object-storage
+{{- end }}

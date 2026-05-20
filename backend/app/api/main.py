@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import health
 from app.api.v1 import (
+    attachments,
     auth,
     bcps,
     communications,
@@ -54,6 +55,9 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 # P0
 app.include_router(functions.router, prefix="/api/v1/functions", tags=["functions"])
 app.include_router(bcps.router, prefix="/api/v1/bcps", tags=["bcps"])
+app.include_router(
+    attachments.router, prefix="/api/v1/bcps", tags=["bcp-attachments"]
+)
 app.include_router(impact.router, prefix="/api/v1/impact", tags=["impact"])
 app.include_router(recovery.router, prefix="/api/v1/recovery", tags=["recovery"])
 app.include_router(

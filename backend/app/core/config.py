@@ -46,6 +46,17 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     redis_embed_cache_ttl_seconds: int = 60 * 60 * 24 * 7  # 7 days
 
+    # Object storage (S3-compatible: MinIO locally, AWS S3 in prod).
+    # Leave s3_endpoint_url empty to disable; attachment routes will return 503.
+    s3_endpoint_url: str = "http://localhost:9000"
+    s3_region: str = "us-east-1"
+    s3_access_key_id: str = "minioadmin"
+    s3_secret_access_key: str = "minioadmin"
+    s3_bucket: str = "dclaw-continuity"
+    s3_force_path_style: bool = True  # required for MinIO
+    s3_presigned_url_ttl_seconds: int = 60 * 60  # 1 hour
+    s3_max_upload_bytes: int = 20 * 1024 * 1024  # 20 MB
+
 
 @lru_cache()
 def get_settings() -> Settings:

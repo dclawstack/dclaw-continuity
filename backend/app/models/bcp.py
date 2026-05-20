@@ -57,4 +57,9 @@ class BCP(Base, TimestampMixin):
     # Gaps identified during gap-analysis runs.
     gaps: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
 
+    # File attachments uploaded by the user. Each entry is:
+    #   {"id": uuid, "key": "bcps/<bcp>/<id>", "filename": str,
+    #    "content_type": str, "size": int, "uploaded_at": iso, "uploaded_by": sub}
+    attachments: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+
     function: Mapped["BusinessFunction"] = relationship(back_populates="bcps")
