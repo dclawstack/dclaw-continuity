@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     embedding_dim: int = 768
     rag_top_k: int = 5
 
+    # Redis (cache / bus)
+    # Disable by leaving redis_url empty — callers fall back to no-cache.
+    redis_url: str = "redis://localhost:6379/0"
+    redis_embed_cache_ttl_seconds: int = 60 * 60 * 24 * 7  # 7 days
+
 
 @lru_cache()
 def get_settings() -> Settings:
