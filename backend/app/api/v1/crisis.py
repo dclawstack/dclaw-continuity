@@ -39,7 +39,7 @@ async def activate(
     try:
         return await crisis_service.activate(db, payload)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/{activation_id}", response_model=CrisisActivationRead)

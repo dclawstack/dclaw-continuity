@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import CurrentUser, get_current_user
@@ -12,8 +11,8 @@ from app.schemas.supply_chain import (
     SupplierCreate,
     SupplierRead,
     SupplierUpdate,
-    SupplyChainAssessRequest,
     SupplyChainAssessmentRead,
+    SupplyChainAssessRequest,
 )
 from app.services import supply_chain_service
 

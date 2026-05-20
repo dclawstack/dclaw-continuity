@@ -27,9 +27,7 @@ async def test_bcp_crud(authed_client):
     bcp = resp.json()
     assert bcp["title"] == "Payments BCP"
 
-    listing = await authed_client.get(
-        "/api/v1/bcps/", params={"function_id": fn["id"]}
-    )
+    listing = await authed_client.get("/api/v1/bcps/", params={"function_id": fn["id"]})
     assert listing.status_code == 200
     assert len(listing.json()) == 1
 
@@ -40,9 +38,7 @@ async def test_bcp_generate_uses_llm(authed_client, fake_llm):
         "title": "Generated BCP",
         "summary": "AI-drafted plan",
         "objectives": ["restore quickly"],
-        "procedures": [
-            {"step": 1, "action": "activate", "owner": "ops", "duration_minutes": 5}
-        ],
+        "procedures": [{"step": 1, "action": "activate", "owner": "ops", "duration_minutes": 5}],
     }
     fn = await _create_function(authed_client, name="Logistics")
     resp = await authed_client.post(
@@ -65,9 +61,7 @@ async def test_bcp_gap_analysis(authed_client, fake_llm):
         "procedures": [],
     }
     fn = await _create_function(authed_client, name="Support")
-    gen = await authed_client.post(
-        "/api/v1/bcps/generate", json={"function_id": fn["id"]}
-    )
+    gen = await authed_client.post("/api/v1/bcps/generate", json={"function_id": fn["id"]})
     bcp_id = gen.json()["id"]
 
     fake_llm.json_response = {

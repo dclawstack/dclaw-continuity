@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,9 +11,7 @@ from app.models.crisis import ActivationStatus, CrisisActivation
 from app.schemas.crisis import CrisisActivateRequest, CrisisStatusUpdate
 
 
-async def list_activations(
-    db: AsyncSession, *, only_open: bool = False
-) -> list[CrisisActivation]:
+async def list_activations(db: AsyncSession, *, only_open: bool = False) -> list[CrisisActivation]:
     stmt = select(CrisisActivation).order_by(CrisisActivation.activated_at.desc())
     if only_open:
         stmt = stmt.where(CrisisActivation.status != ActivationStatus.CLOSED)
@@ -22,18 +19,12 @@ async def list_activations(
     return list(result.scalars().all())
 
 
-async def get_activation(
-    db: AsyncSession, activation_id: uuid.UUID
-) -> Optional[CrisisActivation]:
-    result = await db.execute(
-        select(CrisisActivation).where(CrisisActivation.id == activation_id)
-    )
+async def get_activation(db: AsyncSession, activation_id: uuid.UUID) -> CrisisActivation | None:
+    result = await db.execute(select(CrisisActivation).where(CrisisActivation.id == activation_id))
     return result.scalar_one_or_none()
 
 
-async def activate(
-    db: AsyncSession, payload: CrisisActivateRequest
-) -> CrisisActivation:
+async def activate(db: AsyncSession, payload: CrisisActivateRequest) -> CrisisActivation:
     """Resolve a BCP and create a new activation record.
 
     Prefers an explicit bcp_id; if only function_id is given, picks the most
@@ -42,11 +33,9 @@ async def activate(
 
     bcp = await _resolve_bcp(db, payload)
     if bcp is None:
-        raise ValueError(
-            "no BCP available — provide bcp_id or function_id with an existing BCP"
-        )
+        raise ValueError("no BCP available — provide bcp_id or function_id with an existing BCP")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     activation = CrisisActivation(
         bcp_id=bcp.id,
         external_crisis_id=payload.external_crisis_id,
@@ -74,7 +63,7 @@ async def update_status(
     activation: CrisisActivation,
     update: CrisisStatusUpdate,
 ) -> CrisisActivation:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     activation.status = update.status
     activation.timeline = activation.timeline + [
         {
@@ -90,9 +79,7 @@ async def update_status(
     return activation
 
 
-async def _resolve_bcp(
-    db: AsyncSession, payload: CrisisActivateRequest
-) -> Optional[BCP]:
+async def _resolve_bcp(db: AsyncSession, payload: CrisisActivateRequest) -> BCP | None:
     if payload.bcp_id is not None:
         result = await db.execute(select(BCP).where(BCP.id == payload.bcp_id))
         return result.scalar_one_or_none()

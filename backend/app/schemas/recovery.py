@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -25,14 +25,14 @@ class RecoveryStrategyCreate(RecoveryStrategyBase):
 
 
 class RecoveryStrategyUpdate(BaseModel):
-    title: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    kind: Optional[StrategyKind] = None
-    description: Optional[str] = None
-    estimated_cost_usd: Optional[int] = None
-    rto_minutes: Optional[int] = None
-    rpo_minutes: Optional[int] = None
-    is_recommended: Optional[bool] = None
-    details: Optional[dict[str, Any]] = None
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    kind: StrategyKind | None = None
+    description: str | None = None
+    estimated_cost_usd: int | None = None
+    rto_minutes: int | None = None
+    rpo_minutes: int | None = None
+    is_recommended: bool | None = None
+    details: dict[str, Any] | None = None
 
 
 class RecoveryStrategyRead(RecoveryStrategyBase):
@@ -46,5 +46,5 @@ class RecoveryStrategyRead(RecoveryStrategyBase):
 
 class RecoveryRecommendRequest(BaseModel):
     function_id: uuid.UUID
-    budget_usd: Optional[int] = None
+    budget_usd: int | None = None
     additional_context: str = ""

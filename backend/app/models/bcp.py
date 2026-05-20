@@ -7,7 +7,8 @@ import uuid
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Enum, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, new_uuid
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from app.models.business_function import BusinessFunction
 
 
-class BCPStatus(str, enum.Enum):
+class BCPStatus(enum.StrEnum):
     DRAFT = "draft"
     REVIEW = "review"
     APPROVED = "approved"
@@ -26,9 +27,7 @@ class BCPStatus(str, enum.Enum):
 class BCP(Base, TimestampMixin):
     __tablename__ = "bcps"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, default=new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=new_uuid)
     function_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("business_functions.id", ondelete="CASCADE"),
@@ -62,4 +61,4 @@ class BCP(Base, TimestampMixin):
     #    "content_type": str, "size": int, "uploaded_at": iso, "uploaded_by": sub}
     attachments: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
 
-    function: Mapped["BusinessFunction"] = relationship(back_populates="bcps")
+    function: Mapped[BusinessFunction] = relationship(back_populates="bcps")

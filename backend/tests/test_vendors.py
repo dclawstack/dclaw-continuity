@@ -38,15 +38,7 @@ async def test_create_and_assess_vendor(authed_client, fake_llm):
 
 @pytest.mark.asyncio
 async def test_assess_score_clamped(authed_client, fake_llm):
-    v = (
-        await authed_client.post(
-            "/api/v1/vendors/", json={"name": "Vendor X"}
-        )
-    ).json()
+    v = (await authed_client.post("/api/v1/vendors/", json={"name": "Vendor X"})).json()
     fake_llm.json_response = {"readiness_score": -100, "risk_level": "high"}
-    a = (
-        await authed_client.post(
-            "/api/v1/vendors/assess", json={"vendor_id": v["id"]}
-        )
-    ).json()
+    a = (await authed_client.post("/api/v1/vendors/assess", json={"vendor_id": v["id"]})).json()
     assert a["readiness_score"] == 0

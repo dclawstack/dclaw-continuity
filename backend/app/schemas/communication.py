@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -53,9 +52,9 @@ class CommunicationPlanCreate(BaseModel):
 
 
 class CommunicationPlanUpdate(BaseModel):
-    audience: Optional[str] = None
-    scenario: Optional[str] = None
-    tone: Optional[str] = None
-    channels: Optional[list[str]] = None
-    escalation_path: Optional[list[str]] = None
-    notes: Optional[str] = None
+    audience: str | None = None
+    scenario: str | None = None
+    tone: str | None = None
+    channels: list[str] | None = None
+    escalation_path: list[str] | None = None
+    notes: str | None = None

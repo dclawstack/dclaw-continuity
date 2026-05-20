@@ -6,7 +6,8 @@ import uuid
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, new_uuid
@@ -18,9 +19,7 @@ if TYPE_CHECKING:
 class CommunicationPlan(Base, TimestampMixin):
     __tablename__ = "communication_plans"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, default=new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=new_uuid)
     function_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("business_functions.id", ondelete="CASCADE"),
@@ -35,18 +34,16 @@ class CommunicationPlan(Base, TimestampMixin):
     escalation_path: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
     notes: Mapped[str] = mapped_column(Text, default="", nullable=False)
 
-    templates: Mapped[list["CommunicationTemplate"]] = relationship(
+    templates: Mapped[list[CommunicationTemplate]] = relationship(
         back_populates="plan", cascade="all, delete-orphan"
     )
-    function: Mapped["BusinessFunction"] = relationship()
+    function: Mapped[BusinessFunction] = relationship()
 
 
 class CommunicationTemplate(Base, TimestampMixin):
     __tablename__ = "communication_templates"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, default=new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=new_uuid)
     plan_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("communication_plans.id", ondelete="CASCADE"),
@@ -59,4 +56,4 @@ class CommunicationTemplate(Base, TimestampMixin):
     subject: Mapped[str] = mapped_column(String(255), default="", nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
 
-    plan: Mapped["CommunicationPlan"] = relationship(back_populates="templates")
+    plan: Mapped[CommunicationPlan] = relationship(back_populates="templates")

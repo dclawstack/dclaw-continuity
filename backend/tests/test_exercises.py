@@ -61,11 +61,7 @@ async def test_exercise_generate_start_evaluate(authed_client, fake_llm):
 async def test_exercise_score_clamped(authed_client, fake_llm):
     bcp = await _create_bcp(authed_client)
     fake_llm.json_response = {"name": "X", "scenario": "y", "objectives": []}
-    ex = (
-        await authed_client.post(
-            "/api/v1/exercises/generate", json={"bcp_id": bcp["id"]}
-        )
-    ).json()
+    ex = (await authed_client.post("/api/v1/exercises/generate", json={"bcp_id": bcp["id"]})).json()
     await authed_client.post(f"/api/v1/exercises/{ex['id']}/start")
     fake_llm.json_response = {"score": 9999}
     r = await authed_client.post(

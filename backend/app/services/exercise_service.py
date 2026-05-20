@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,9 +23,7 @@ from app.services.prompts import (
 )
 
 
-async def list_exercises(
-    db: AsyncSession, bcp_id: Optional[uuid.UUID] = None
-) -> list[Exercise]:
+async def list_exercises(db: AsyncSession, bcp_id: uuid.UUID | None = None) -> list[Exercise]:
     stmt = select(Exercise).order_by(Exercise.created_at.desc())
     if bcp_id is not None:
         stmt = stmt.where(Exercise.bcp_id == bcp_id)
@@ -34,7 +31,7 @@ async def list_exercises(
     return list(result.scalars().all())
 
 
-async def get_exercise(db: AsyncSession, exercise_id: uuid.UUID) -> Optional[Exercise]:
+async def get_exercise(db: AsyncSession, exercise_id: uuid.UUID) -> Exercise | None:
     result = await db.execute(select(Exercise).where(Exercise.id == exercise_id))
     return result.scalar_one_or_none()
 
@@ -47,9 +44,7 @@ async def create_exercise(db: AsyncSession, payload: ExerciseCreate) -> Exercise
     return ex
 
 
-async def update_exercise(
-    db: AsyncSession, ex: Exercise, payload: ExerciseUpdate
-) -> Exercise:
+async def update_exercise(db: AsyncSession, ex: Exercise, payload: ExerciseUpdate) -> Exercise:
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(ex, k, v)
     await db.commit()
@@ -66,15 +61,13 @@ async def generate_exercise_from_bcp(
     db: AsyncSession,
     bcp: BCP,
     focus: str = "",
-    llm: Optional[LLMClient] = None,
+    llm: LLMClient | None = None,
 ) -> Exercise:
     """Ask the AI to draft a realistic exercise scenario for a BCP."""
 
     llm = llm or get_llm_client()
     fn = (
-        await db.execute(
-            select(BusinessFunction).where(BusinessFunction.id == bcp.function_id)
-        )
+        await db.execute(select(BusinessFunction).where(BusinessFunction.id == bcp.function_id))
     ).scalar_one()
 
     prompt = EXERCISE_SCENARIO_PROMPT.format(
@@ -108,7 +101,7 @@ async def start_exercise(db: AsyncSession, ex: Exercise) -> Exercise:
     if ex.status != ExerciseStatus.PLANNED:
         return ex
     ex.status = ExerciseStatus.RUNNING
-    ex.started_at = datetime.now(timezone.utc)
+    ex.started_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(ex)
     return ex
@@ -118,7 +111,7 @@ async def evaluate_exercise(
     db: AsyncSession,
     ex: Exercise,
     observation: ExerciseRunObservation,
-    llm: Optional[LLMClient] = None,
+    llm: LLMClient | None = None,
 ) -> Exercise:
     """Run AI evaluation of how well the BCP was executed and persist a score."""
 
@@ -143,7 +136,7 @@ async def evaluate_exercise(
     ex.score = _clamp_score(int(result.get("score") or 0))
     ex.evaluation = result
     ex.status = ExerciseStatus.COMPLETED
-    ex.completed_at = datetime.now(timezone.utc)
+    ex.completed_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(ex)
     await rag_service.index_exercise_evaluation(db, ex)

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +21,7 @@ router = APIRouter()
 
 @router.get("/", response_model=list[ExerciseRead])
 async def list_exercises(
-    bcp_id: Optional[uuid.UUID] = Query(default=None),
+    bcp_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     _: CurrentUser = Depends(get_current_user),
 ):
@@ -75,9 +74,7 @@ async def delete_exercise(
     await exercise_service.delete_exercise(db, ex)
 
 
-@router.post(
-    "/generate", response_model=ExerciseRead, status_code=status.HTTP_201_CREATED
-)
+@router.post("/generate", response_model=ExerciseRead, status_code=status.HTTP_201_CREATED)
 async def generate_exercise(
     payload: ExerciseGenerateRequest,
     db: AsyncSession = Depends(get_db),
@@ -86,9 +83,7 @@ async def generate_exercise(
     bcp = await bcp_service.get_bcp(db, payload.bcp_id)
     if bcp is None:
         raise HTTPException(status_code=404, detail="bcp not found")
-    return await exercise_service.generate_exercise_from_bcp(
-        db, bcp, focus=payload.focus
-    )
+    return await exercise_service.generate_exercise_from_bcp(db, bcp, focus=payload.focus)
 
 
 @router.post("/{exercise_id}/start", response_model=ExerciseRead)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import enum
 import uuid
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Enum, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from app.models.business_function import BusinessFunction
 
 
-class DependencyType(str, enum.Enum):
+class DependencyType(enum.StrEnum):
     SYSTEM = "system"
     PROCESS = "process"
     PEOPLE = "people"
@@ -28,9 +28,7 @@ class DependencyType(str, enum.Enum):
 class Dependency(Base, TimestampMixin):
     __tablename__ = "dependencies"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, default=new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=new_uuid)
     function_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("business_functions.id", ondelete="CASCADE"),
@@ -38,7 +36,7 @@ class Dependency(Base, TimestampMixin):
         index=True,
     )
     # Optional link to another function if this dep is internal.
-    depends_on_function_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    depends_on_function_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("business_functions.id", ondelete="SET NULL"),
         nullable=True,
@@ -56,6 +54,6 @@ class Dependency(Base, TimestampMixin):
     description: Mapped[str] = mapped_column(Text, default="", nullable=False)
     criticality: Mapped[str] = mapped_column(String(32), default="medium", nullable=False)
 
-    function: Mapped["BusinessFunction"] = relationship(
+    function: Mapped[BusinessFunction] = relationship(
         back_populates="dependencies", foreign_keys=[function_id]
     )

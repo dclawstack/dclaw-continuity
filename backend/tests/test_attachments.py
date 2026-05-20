@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import pytest
 import pytest_asyncio
 
@@ -22,9 +20,7 @@ class FakeObjectStorage:
     async def delete_object(self, key: str) -> None:
         self.objects.pop(key, None)
 
-    async def presigned_get_url(
-        self, key: str, expires_in: Optional[int] = None
-    ) -> str:
+    async def presigned_get_url(self, key: str, expires_in: int | None = None) -> str:
         if key not in self.objects:
             raise FileNotFoundError(key)
         return f"http://fake-s3.test/{key}?signature=fake"
@@ -86,18 +82,14 @@ async def test_upload_list_url_delete_roundtrip(authed_client, fake_storage):
     assert rows[0]["id"] == att["id"]
 
     # Presigned URL
-    url_resp = await authed_client.get(
-        f"/api/v1/bcps/{bcp['id']}/attachments/{att['id']}/url"
-    )
+    url_resp = await authed_client.get(f"/api/v1/bcps/{bcp['id']}/attachments/{att['id']}/url")
     assert url_resp.status_code == 200
     payload = url_resp.json()
     assert payload["url"].startswith("http")
     assert payload["expires_in"] > 0
 
     # Delete
-    deleted = await authed_client.delete(
-        f"/api/v1/bcps/{bcp['id']}/attachments/{att['id']}"
-    )
+    deleted = await authed_client.delete(f"/api/v1/bcps/{bcp['id']}/attachments/{att['id']}")
     assert deleted.status_code == 204
     after = await authed_client.get(f"/api/v1/bcps/{bcp['id']}/attachments")
     assert after.json() == []
@@ -122,9 +114,7 @@ async def test_upload_too_large_rejected(authed_client, fake_storage, monkeypatc
 async def test_missing_attachment_returns_404(authed_client, fake_storage):
     bcp = await _create_function_and_bcp(authed_client)
     fake_id = "00000000-0000-0000-0000-000000000000"
-    resp = await authed_client.get(
-        f"/api/v1/bcps/{bcp['id']}/attachments/{fake_id}/url"
-    )
+    resp = await authed_client.get(f"/api/v1/bcps/{bcp['id']}/attachments/{fake_id}/url")
     assert resp.status_code == 404
 
 

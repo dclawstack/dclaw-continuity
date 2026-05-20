@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -23,12 +23,12 @@ class WorkAreaSiteCreate(WorkAreaSiteBase):
 
 
 class WorkAreaSiteUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    kind: Optional[SiteKind] = None
-    location: Optional[str] = None
-    capacity_seats: Optional[int] = None
-    has_remote_access: Optional[bool] = None
-    notes: Optional[str] = None
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    kind: SiteKind | None = None
+    location: str | None = None
+    capacity_seats: int | None = None
+    has_remote_access: bool | None = None
+    notes: str | None = None
 
 
 class WorkAreaSiteRead(WorkAreaSiteBase):

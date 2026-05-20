@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -14,7 +13,7 @@ class DependencyBase(BaseModel):
     type: DependencyType
     description: str = ""
     criticality: str = "medium"
-    depends_on_function_id: Optional[uuid.UUID] = None
+    depends_on_function_id: uuid.UUID | None = None
 
 
 class DependencyCreate(DependencyBase):

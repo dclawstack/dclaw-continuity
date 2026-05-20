@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,9 +18,7 @@ from app.services.prompts import (
 )
 
 
-async def list_bcps(
-    db: AsyncSession, function_id: Optional[uuid.UUID] = None
-) -> list[BCP]:
+async def list_bcps(db: AsyncSession, function_id: uuid.UUID | None = None) -> list[BCP]:
     stmt = select(BCP).order_by(BCP.created_at.desc())
     if function_id is not None:
         stmt = stmt.where(BCP.function_id == function_id)
@@ -29,7 +26,7 @@ async def list_bcps(
     return list(result.scalars().all())
 
 
-async def get_bcp(db: AsyncSession, bcp_id: uuid.UUID) -> Optional[BCP]:
+async def get_bcp(db: AsyncSession, bcp_id: uuid.UUID) -> BCP | None:
     result = await db.execute(select(BCP).where(BCP.id == bcp_id))
     return result.scalar_one_or_none()
 
@@ -59,15 +56,13 @@ async def generate_bcp_for_function(
     db: AsyncSession,
     function: BusinessFunction,
     additional_context: str = "",
-    llm: Optional[LLMClient] = None,
+    llm: LLMClient | None = None,
 ) -> BCP:
     """Ask the AI to draft a BCP and persist it as DRAFT."""
 
     llm = llm or get_llm_client()
 
-    deps_result = await db.execute(
-        select(Dependency).where(Dependency.function_id == function.id)
-    )
+    deps_result = await db.execute(select(Dependency).where(Dependency.function_id == function.id))
     deps = [f"{d.name} ({d.type.value})" for d in deps_result.scalars()]
 
     prompt = BCP_GENERATION_PROMPT.format(
@@ -103,9 +98,7 @@ async def generate_bcp_for_function(
     return bcp
 
 
-async def run_gap_analysis(
-    db: AsyncSession, bcp: BCP, llm: Optional[LLMClient] = None
-) -> BCP:
+async def run_gap_analysis(db: AsyncSession, bcp: BCP, llm: LLMClient | None = None) -> BCP:
     llm = llm or get_llm_client()
 
     fn_result = await db.execute(

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import hashlib
 import struct
-from typing import Optional
 
 import httpx
 from redis import asyncio as aioredis
@@ -32,7 +31,7 @@ class EmbeddingUnavailable(RuntimeError):
 
 
 def _cache_key(model: str, text: str) -> str:
-    h = hashlib.sha256(f"{model}\x00{text}".encode("utf-8")).hexdigest()
+    h = hashlib.sha256(f"{model}\x00{text}".encode()).hexdigest()
     return f"emb:{h}"
 
 
@@ -49,10 +48,10 @@ class EmbeddingClient:
     def __init__(
         self,
         *,
-        base_url: Optional[str] = None,
-        model: Optional[str] = None,
-        timeout: Optional[int] = None,
-        cache: Optional[aioredis.Redis] = None,
+        base_url: str | None = None,
+        model: str | None = None,
+        timeout: int | None = None,
+        cache: aioredis.Redis | None = None,
     ) -> None:
         self.base_url = (base_url or settings.ollama_base_url).rstrip("/")
         self.model = model or settings.ollama_embed_model
@@ -102,7 +101,7 @@ class EmbeddingClient:
             if self.cache is not None:
                 try:
                     async with self.cache.pipeline(transaction=False) as pipe:
-                        for (_, text), vec in zip(misses, fetched):
+                        for (_, text), vec in zip(misses, fetched, strict=True):
                             pipe.set(
                                 _cache_key(self.model, text),
                                 _vec_to_bytes(vec),
@@ -116,7 +115,7 @@ class EmbeddingClient:
         result: list[list[float]] = [None] * len(texts)  # type: ignore[list-item]
         for i, vec in cached.items():
             result[i] = vec
-        for (idx, _), vec in zip(misses, fetched):
+        for (idx, _), vec in zip(misses, fetched, strict=True):
             result[idx] = vec
         return result
 
@@ -124,9 +123,7 @@ class EmbeddingClient:
         url = f"{self.base_url}/api/embed"
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                resp = await client.post(
-                    url, json={"model": self.model, "input": texts}
-                )
+                resp = await client.post(url, json={"model": self.model, "input": texts})
                 if resp.status_code >= 400:
                     raise EmbeddingUnavailable(
                         f"ollama embed {resp.status_code}: {resp.text[:200]}"
@@ -136,15 +133,13 @@ class EmbeddingClient:
             raise EmbeddingUnavailable(f"ollama unreachable: {exc}") from exc
 
         # Newer Ollama returns "embeddings"; some versions return "embedding".
-        emb = data.get("embeddings") or (
-            [data["embedding"]] if "embedding" in data else None
-        )
+        emb = data.get("embeddings") or ([data["embedding"]] if "embedding" in data else None)
         if not emb:
             raise EmbeddingUnavailable(f"unexpected response: {data}")
         return emb
 
 
-_singleton: Optional[EmbeddingClient] = None
+_singleton: EmbeddingClient | None = None
 
 
 def get_embedding_client() -> EmbeddingClient:

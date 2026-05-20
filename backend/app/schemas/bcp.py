@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,11 +22,11 @@ class BCPCreate(BCPBase):
 
 
 class BCPUpdate(BaseModel):
-    title: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    summary: Optional[str] = None
-    status: Optional[BCPStatus] = None
-    content: Optional[dict[str, Any]] = None
-    gaps: Optional[list[Any]] = None
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    summary: str | None = None
+    status: BCPStatus | None = None
+    content: dict[str, Any] | None = None
+    gaps: list[Any] | None = None
 
 
 class BCPRead(BCPBase):

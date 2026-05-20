@@ -7,8 +7,6 @@ should treat Redis as unavailable — never let it block a user request.
 
 from __future__ import annotations
 
-from typing import Optional
-
 from redis import asyncio as aioredis
 
 from app.core.config import settings
@@ -17,10 +15,10 @@ from app.core.logging import get_logger
 log = get_logger(__name__)
 
 
-_client: Optional[aioredis.Redis] = None
+_client: aioredis.Redis | None = None
 
 
-def get_redis() -> Optional[aioredis.Redis]:
+def get_redis() -> aioredis.Redis | None:
     """Return a shared async Redis client, or None if disabled.
 
     Connection errors don't raise here — they surface only on the first

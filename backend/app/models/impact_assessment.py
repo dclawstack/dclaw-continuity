@@ -6,7 +6,8 @@ import uuid
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, new_uuid
@@ -18,9 +19,7 @@ if TYPE_CHECKING:
 class ImpactAssessment(Base, TimestampMixin):
     __tablename__ = "impact_assessments"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, default=new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=new_uuid)
     function_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("business_functions.id", ondelete="CASCADE"),
@@ -36,11 +35,9 @@ class ImpactAssessment(Base, TimestampMixin):
     operational_impact_score: Mapped[int] = mapped_column(
         Integer, default=0, nullable=False
     )  # 0-10
-    reputation_impact_score: Mapped[int] = mapped_column(
-        Integer, default=0, nullable=False
-    )  # 0-10
+    reputation_impact_score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)  # 0-10
 
     # AI breakdown: {"timeline": {...}, "stakeholders": [...], "narrative": "..."}
     details: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
-    function: Mapped["BusinessFunction"] = relationship(back_populates="impact_assessments")
+    function: Mapped[BusinessFunction] = relationship(back_populates="impact_assessments")

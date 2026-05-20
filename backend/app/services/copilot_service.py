@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import re
 import uuid
-from typing import Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +21,6 @@ from app.services import rag_service
 from app.services.llm import ChatMessage, LLMClient, get_llm_client
 from app.services.prompts import COPILOT_SYSTEM_PROMPT
 
-
 _SUGGEST_HINT = """After your answer, on a new line, emit a JSON object with the
 key "suggestions" — an array (0-3 items) of {action, label, payload}. Use
 actions from: create_function, generate_bcp, model_impact, recommend_recovery,
@@ -39,7 +37,7 @@ async def chat(
     db: AsyncSession,
     user_sub: str,
     request: CopilotChatRequest,
-    llm: Optional[LLMClient] = None,
+    llm: LLMClient | None = None,
 ) -> CopilotChatResponse:
     llm = llm or get_llm_client()
 
@@ -97,9 +95,7 @@ async def chat(
     )
 
 
-async def get_conversation(
-    db: AsyncSession, conversation_id: uuid.UUID
-) -> list[CopilotMessage]:
+async def get_conversation(db: AsyncSession, conversation_id: uuid.UUID) -> list[CopilotMessage]:
     result = await db.execute(
         select(CopilotMessage)
         .where(CopilotMessage.conversation_id == conversation_id)
@@ -127,9 +123,7 @@ async def _build_context_snapshot(db: AsyncSession) -> dict:
     ia_count = (await db.execute(select(func.count(ImpactAssessment.id)))).scalar() or 0
     rs_count = (await db.execute(select(func.count(RecoveryStrategy.id)))).scalar() or 0
 
-    fn_sample = (
-        await db.execute(select(BusinessFunction).limit(5))
-    ).scalars().all()
+    fn_sample = (await db.execute(select(BusinessFunction).limit(5))).scalars().all()
 
     return {
         "counts": {
@@ -154,9 +148,7 @@ async def _build_context_snapshot(db: AsyncSession) -> dict:
 def _format_retrieved(hits: list) -> str:
     lines = ["Retrieved evidence (most similar first):"]
     for h in hits:
-        lines.append(
-            f"- [{h.source_type}] {h.title}\n  {h.text[:600]}"
-        )
+        lines.append(f"- [{h.source_type}] {h.title}\n  {h.text[:600]}")
     return "\n".join(lines)
 
 
@@ -167,7 +159,7 @@ def _split_reply_and_suggestions(raw: str) -> tuple[str, list[CopilotSuggestion]
     match = _SUGGEST_RE.search(raw)
     if not match:
         return raw.strip(), []
-    reply = (raw[: match.start()] + raw[match.end():]).strip()
+    reply = (raw[: match.start()] + raw[match.end() :]).strip()
     body = match.group(1).strip()
     try:
         parsed = json.loads(body)

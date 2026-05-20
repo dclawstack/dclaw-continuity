@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -36,6 +36,6 @@ class RegulatoryReportSubmitRequest(BaseModel):
 
 
 class RegulatoryReportUpdate(BaseModel):
-    title: Optional[str] = None
-    status: Optional[ReportStatus] = None
-    notes: Optional[str] = None
+    title: str | None = None
+    status: ReportStatus | None = None
+    notes: str | None = None

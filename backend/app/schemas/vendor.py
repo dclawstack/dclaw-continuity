@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -20,11 +20,11 @@ class VendorCreate(VendorBase):
 
 
 class VendorUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    contact: Optional[str] = None
-    services_provided: Optional[str] = None
-    tier: Optional[str] = None
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = None
+    contact: str | None = None
+    services_provided: str | None = None
+    tier: str | None = None
 
 
 class VendorRead(VendorBase):

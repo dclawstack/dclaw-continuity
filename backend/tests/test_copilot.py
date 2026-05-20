@@ -33,9 +33,7 @@ async def test_chat_persists_conversation(authed_client, fake_llm):
 @pytest.mark.asyncio
 async def test_chat_without_suggestions(authed_client, fake_llm):
     fake_llm.text_response = "Just a plain reply."
-    resp = await authed_client.post(
-        "/api/v1/copilot/chat", json={"message": "hi"}
-    )
+    resp = await authed_client.post("/api/v1/copilot/chat", json={"message": "hi"})
     assert resp.status_code == 200
     body = resp.json()
     assert body["reply"] == "Just a plain reply."

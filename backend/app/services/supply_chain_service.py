@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,16 +17,10 @@ from app.services.prompts import COPILOT_SYSTEM_PROMPT, SUPPLY_CHAIN_PROMPT
 
 
 async def list_suppliers(db: AsyncSession) -> list[Supplier]:
-    return list(
-        (await db.execute(select(Supplier).order_by(Supplier.name)))
-        .scalars()
-        .all()
-    )
+    return list((await db.execute(select(Supplier).order_by(Supplier.name))).scalars().all())
 
 
-async def get_supplier(
-    db: AsyncSession, supplier_id: uuid.UUID
-) -> Optional[Supplier]:
+async def get_supplier(db: AsyncSession, supplier_id: uuid.UUID) -> Supplier | None:
     return (
         await db.execute(select(Supplier).where(Supplier.id == supplier_id))
     ).scalar_one_or_none()
@@ -41,9 +34,7 @@ async def create_supplier(db: AsyncSession, payload: SupplierCreate) -> Supplier
     return s
 
 
-async def update_supplier(
-    db: AsyncSession, s: Supplier, payload: SupplierUpdate
-) -> Supplier:
+async def update_supplier(db: AsyncSession, s: Supplier, payload: SupplierUpdate) -> Supplier:
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(s, k, v)
     await db.commit()
@@ -57,11 +48,9 @@ async def delete_supplier(db: AsyncSession, s: Supplier) -> None:
 
 
 async def list_assessments(
-    db: AsyncSession, supplier_id: Optional[uuid.UUID] = None
+    db: AsyncSession, supplier_id: uuid.UUID | None = None
 ) -> list[SupplyChainAssessment]:
-    stmt = select(SupplyChainAssessment).order_by(
-        SupplyChainAssessment.created_at.desc()
-    )
+    stmt = select(SupplyChainAssessment).order_by(SupplyChainAssessment.created_at.desc())
     if supplier_id is not None:
         stmt = stmt.where(SupplyChainAssessment.supplier_id == supplier_id)
     return list((await db.execute(stmt)).scalars().all())
@@ -71,7 +60,7 @@ async def assess_supplier(
     db: AsyncSession,
     supplier: Supplier,
     request: SupplyChainAssessRequest,
-    llm: Optional[LLMClient] = None,
+    llm: LLMClient | None = None,
 ) -> SupplyChainAssessment:
     """AI predicts disruption probability + suggests alternative suppliers."""
 

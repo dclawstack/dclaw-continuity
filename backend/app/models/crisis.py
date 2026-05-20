@@ -10,10 +10,11 @@ from __future__ import annotations
 import enum
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, new_uuid
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
     from app.models.bcp import BCP
 
 
-class ActivationStatus(str, enum.Enum):
+class ActivationStatus(enum.StrEnum):
     ACTIVATED = "activated"
     RECOVERING = "recovering"
     STABILIZED = "stabilized"
@@ -32,9 +33,7 @@ class ActivationStatus(str, enum.Enum):
 class CrisisActivation(Base, TimestampMixin):
     __tablename__ = "crisis_activations"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, default=new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=new_uuid)
     bcp_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("bcps.id", ondelete="CASCADE"),
@@ -43,9 +42,7 @@ class CrisisActivation(Base, TimestampMixin):
     )
 
     # External identifier from the source app (e.g. DClaw Crisis incident ID).
-    external_crisis_id: Mapped[Optional[str]] = mapped_column(
-        String(255), nullable=True, index=True
-    )
+    external_crisis_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     source: Mapped[str] = mapped_column(String(64), default="manual", nullable=False)
 
     title: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -61,14 +58,10 @@ class CrisisActivation(Base, TimestampMixin):
         nullable=False,
     )
 
-    activated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    closed_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    activated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Append-only log of status updates: [{"at": iso, "status": str, "note": str}]
     timeline: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
 
-    bcp: Mapped["BCP"] = relationship()
+    bcp: Mapped[BCP] = relationship()

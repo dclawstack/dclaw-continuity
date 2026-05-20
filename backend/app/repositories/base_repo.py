@@ -1,7 +1,8 @@
+from typing import Generic, TypeVar
 from uuid import UUID
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from typing import TypeVar, Generic
 
 from app.models.base import Base
 
@@ -22,18 +23,14 @@ class BaseRepository(Generic[T]):
         self.model = model
 
     async def list_all(self, limit: int = 20, offset: int = 0) -> tuple[list[T], int]:
-        result = await self.db.execute(
-            select(self.model).limit(limit).offset(offset)
-        )
+        result = await self.db.execute(select(self.model).limit(limit).offset(offset))
         items = list(result.scalars().all())
         count_result = await self.db.execute(select(func.count()).select_from(self.model))
         total = count_result.scalar() or 0
         return items, total
 
     async def get_by_id(self, item_id: UUID) -> T | None:
-        result = await self.db.execute(
-            select(self.model).where(self.model.id == item_id)
-        )
+        result = await self.db.execute(select(self.model).where(self.model.id == item_id))
         return result.scalar_one_or_none()
 
     async def create(self, obj: T) -> T:

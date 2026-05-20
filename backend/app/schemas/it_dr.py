@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -24,13 +24,13 @@ class ITSystemCreate(ITSystemBase):
 
 
 class ITSystemUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    owner: Optional[str] = None
-    tier: Optional[SystemTier] = None
-    rto_minutes: Optional[int] = None
-    rpo_minutes: Optional[int] = None
-    backup_strategy: Optional[str] = None
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = None
+    owner: str | None = None
+    tier: SystemTier | None = None
+    rto_minutes: int | None = None
+    rpo_minutes: int | None = None
+    backup_strategy: str | None = None
 
 
 class ITSystemRead(ITSystemBase):
@@ -50,8 +50,8 @@ class ITDRPlanRead(BaseModel):
     summary: str
     procedure: dict[str, Any]
     test_plan: list[Any]
-    last_tested_at: Optional[datetime]
-    last_test_passed: Optional[bool]
+    last_tested_at: datetime | None
+    last_test_passed: bool | None
     created_at: datetime
     updated_at: datetime
 

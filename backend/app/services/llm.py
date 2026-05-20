@@ -7,8 +7,9 @@ Both backends speak the OpenAI chat-completions shape. Ollama exposes it at
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Iterable, Optional
+from typing import Any
 
 import httpx
 
@@ -37,21 +38,17 @@ class LLMClient:
     def __init__(
         self,
         *,
-        openrouter_api_key: Optional[str] = None,
-        openrouter_base_url: Optional[str] = None,
-        openrouter_model: Optional[str] = None,
-        ollama_base_url: Optional[str] = None,
-        ollama_model: Optional[str] = None,
-        timeout: Optional[int] = None,
+        openrouter_api_key: str | None = None,
+        openrouter_base_url: str | None = None,
+        openrouter_model: str | None = None,
+        ollama_base_url: str | None = None,
+        ollama_model: str | None = None,
+        timeout: int | None = None,
     ) -> None:
         self.openrouter_api_key = openrouter_api_key or settings.openrouter_api_key
-        self.openrouter_base_url = (
-            openrouter_base_url or settings.openrouter_base_url
-        ).rstrip("/")
+        self.openrouter_base_url = (openrouter_base_url or settings.openrouter_base_url).rstrip("/")
         self.openrouter_model = openrouter_model or settings.openrouter_model
-        self.ollama_base_url = (
-            ollama_base_url or settings.ollama_base_url
-        ).rstrip("/")
+        self.ollama_base_url = (ollama_base_url or settings.ollama_base_url).rstrip("/")
         self.ollama_model = ollama_model or settings.ollama_model
         self.timeout = timeout or settings.llm_request_timeout
 
@@ -62,9 +59,7 @@ class LLMClient:
         json_mode: bool = False,
         temperature: float = 0.2,
     ) -> str:
-        payload_msgs = [
-            m.to_dict() if isinstance(m, ChatMessage) else dict(m) for m in messages
-        ]
+        payload_msgs = [m.to_dict() if isinstance(m, ChatMessage) else dict(m) for m in messages]
 
         if self.openrouter_api_key:
             try:
@@ -75,9 +70,7 @@ class LLMClient:
                 log.warning("openrouter_call_failed_falling_back_to_ollama", error=str(exc))
 
         try:
-            return await self._ollama(
-                payload_msgs, json_mode=json_mode, temperature=temperature
-            )
+            return await self._ollama(payload_msgs, json_mode=json_mode, temperature=temperature)
         except Exception as exc:
             raise LLMError(f"all llm backends failed: {exc}") from exc
 
@@ -124,9 +117,7 @@ class LLMClient:
                 json=payload,
             )
             if resp.status_code >= 400:
-                raise LLMError(
-                    f"openrouter {resp.status_code}: {resp.text[:300]}"
-                )
+                raise LLMError(f"openrouter {resp.status_code}: {resp.text[:300]}")
             data = resp.json()
         return data["choices"][0]["message"]["content"]
 
@@ -157,11 +148,11 @@ def _strip_fences(s: str) -> str:
     if s.startswith("```"):
         s = s.split("\n", 1)[1] if "\n" in s else s[3:]
         if s.endswith("```"):
-            s = s[: -3]
+            s = s[:-3]
     return s.strip()
 
 
-_singleton: Optional[LLMClient] = None
+_singleton: LLMClient | None = None
 
 
 def get_llm_client() -> LLMClient:

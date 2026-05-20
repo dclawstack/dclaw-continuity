@@ -40,15 +40,9 @@ async def test_supplier_crud_and_assess(authed_client, fake_llm):
 
 @pytest.mark.asyncio
 async def test_assess_clamps_probability(authed_client, fake_llm):
-    s = (
-        await authed_client.post(
-            "/api/v1/supply-chain/", json={"name": "Vendor Z"}
-        )
-    ).json()
+    s = (await authed_client.post("/api/v1/supply-chain/", json={"name": "Vendor Z"})).json()
     fake_llm.json_response = {"disruption_probability": 500}
     a = (
-        await authed_client.post(
-            "/api/v1/supply-chain/assess", json={"supplier_id": s["id"]}
-        )
+        await authed_client.post("/api/v1/supply-chain/assess", json={"supplier_id": s["id"]})
     ).json()
     assert a["disruption_probability"] == 100

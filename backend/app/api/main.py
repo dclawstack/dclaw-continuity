@@ -70,32 +70,20 @@ Instrumentator(
 # P0
 app.include_router(functions.router, prefix="/api/v1/functions", tags=["functions"])
 app.include_router(bcps.router, prefix="/api/v1/bcps", tags=["bcps"])
-app.include_router(
-    attachments.router, prefix="/api/v1/bcps", tags=["bcp-attachments"]
-)
+app.include_router(attachments.router, prefix="/api/v1/bcps", tags=["bcp-attachments"])
 app.include_router(impact.router, prefix="/api/v1/impact", tags=["impact"])
 app.include_router(recovery.router, prefix="/api/v1/recovery", tags=["recovery"])
-app.include_router(
-    dependencies.router, prefix="/api/v1/dependencies", tags=["dependencies"]
-)
+app.include_router(dependencies.router, prefix="/api/v1/dependencies", tags=["dependencies"])
 app.include_router(copilot.router, prefix="/api/v1/copilot", tags=["copilot"])
 
 # P1
 app.include_router(exercises.router, prefix="/api/v1/exercises", tags=["exercises"])
 app.include_router(crisis.router, prefix="/api/v1/crisis", tags=["crisis"])
 app.include_router(vendors.router, prefix="/api/v1/vendors", tags=["vendors"])
-app.include_router(
-    communications.router, prefix="/api/v1/communications", tags=["communications"]
-)
+app.include_router(communications.router, prefix="/api/v1/communications", tags=["communications"])
 
 # P2
-app.include_router(
-    work_area.router, prefix="/api/v1/work-area", tags=["work-area"]
-)
+app.include_router(work_area.router, prefix="/api/v1/work-area", tags=["work-area"])
 app.include_router(it_dr.router, prefix="/api/v1/it-dr", tags=["it-dr"])
-app.include_router(
-    supply_chain.router, prefix="/api/v1/supply-chain", tags=["supply-chain"]
-)
-app.include_router(
-    regulatory.router, prefix="/api/v1/regulatory", tags=["regulatory"]
-)
+app.include_router(supply_chain.router, prefix="/api/v1/supply-chain", tags=["supply-chain"])
+app.include_router(regulatory.router, prefix="/api/v1/regulatory", tags=["regulatory"])
