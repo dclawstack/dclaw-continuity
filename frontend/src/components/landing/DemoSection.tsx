@@ -112,9 +112,7 @@ export function DemoSection() {
         </div>
 
         <div className="mt-10">
-          {!hydrated ? (
-            <Skeleton />
-          ) : session ? (
+          {hydrated && session ? (
             <ActiveCard session={session} loading={loading} onClear={clear} />
           ) : (
             <SeedCard loading={loading === "seed"} onSeed={seed} err={err} />
@@ -122,12 +120,6 @@ export function DemoSection() {
         </div>
       </div>
     </section>
-  );
-}
-
-function Skeleton() {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 h-48 animate-pulse" />
   );
 }
 
