@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 
 import { api } from "@/lib/api";
-import { setStoredSession } from "@/lib/auth";
 
 const STORAGE_KEY = "dclaw_demo_session";
 
@@ -52,20 +51,14 @@ export function DemoSection() {
         email: result.email,
         password: result.password,
       };
-      // Stash credentials for "Clear demo" + a re-seed prompt on revisit.
+      // Stash credentials so the visitor can use them at /login and so
+      // Clear knows which demo user to delete on return.
       localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-      // Also persist the auth token so a new tab opened on /dashboard
-      // is already signed in.
-      setStoredSession(result.access_token, {
-        id: result.user_id,
-        email: result.email,
-        is_superuser: false,
-      });
       setSession(s);
     } catch (e) {
       setErr(
         e instanceof Error
-          ? `Couldn't reach the API: ${e.message}. The landing site needs the backend running at NEXT_PUBLIC_API_URL.`
+          ? `Couldn't reach the API: ${e.message}. The landing site needs the backend reachable at NEXT_PUBLIC_API_URL.`
           : "Demo seed failed",
       );
     } finally {
@@ -83,8 +76,6 @@ export function DemoSection() {
       // Clear is idempotent server-side; tolerate transient errors.
     }
     localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem("dclaw_token");
-    localStorage.removeItem("dclaw_user");
     setSession(null);
     setLoading(null);
   }
@@ -101,13 +92,14 @@ export function DemoSection() {
             Try the live app
           </div>
           <h2 className="mt-4 text-3xl md:text-4xl font-bold text-slate-900">
-            Spin up a real demo workspace.
+            Spin up a throwaway demo account.
           </h2>
           <p className="mt-4 text-lg text-slate-600">
-            Click below and we'll create a throwaway account with a
-            pre-populated BCP, impact analysis, recovery strategies, and a
-            scored exercise. Open the app in a new tab and click around.
-            When you're done, clear the data and the account disappears.
+            Click below and we'll seed a fresh account with a pre-populated
+            BCP, impact analysis, recovery strategies, and a scored
+            exercise. Sign in with the credentials shown, explore the app
+            in another tab, then come back and click Clear when you're
+            done — the account and its data get deleted.
           </p>
         </div>
 
@@ -139,14 +131,14 @@ function SeedCard({
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <Sparkles className="h-4 w-4 text-blue-500" />
             <span className="font-medium text-slate-900">
-              No demo workspace yet
+              No demo account yet
             </span>
           </div>
           <p className="mt-2 text-sm text-slate-600 max-w-xl">
-            We'll create a fresh user and seed it with a critical Payments
-            function, an AI-style BCP, a $2.4M Black Friday impact
-            scenario, three recovery strategies (one starred), a scored
-            ransomware drill, and a Stripe vendor assessment.
+            We'll create a fresh user and populate it with a critical
+            Payments function, an AI-style BCP, a $2.4M Black Friday
+            impact scenario, three recovery strategies (one starred), a
+            scored ransomware drill, and a Stripe vendor assessment.
           </p>
         </div>
         <button
@@ -186,9 +178,11 @@ function ActiveCard({
     <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-8 shadow-sm">
       <div className="flex items-center gap-2 text-sm">
         <span className="inline-flex h-2 w-2 rounded-full bg-green-500" />
-        <span className="font-medium text-slate-900">Demo workspace ready</span>
+        <span className="font-medium text-slate-900">
+          Demo account ready
+        </span>
         <span className="text-slate-500">
-          · auto-deletes when you click Clear
+          · sign in with the credentials below
         </span>
       </div>
 
@@ -198,19 +192,19 @@ function ActiveCard({
       </div>
 
       <p className="mt-4 text-sm text-slate-600">
-        Opening the app in a new tab signs you in automatically — the
-        credentials above are just for your records. Come back to this tab
-        to clear everything.
+        Open the login page in a new tab and paste those values in. When
+        you're done exploring, come back here and click Clear demo data —
+        the account and everything seeded under it get deleted.
       </p>
 
       <div className="mt-6 flex flex-col sm:flex-row gap-3">
         <a
-          href="/dashboard"
+          href="/login"
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center justify-center gap-2 rounded-md bg-slate-900 text-white px-5 py-2.5 text-sm font-medium hover:bg-slate-800 transition-colors"
         >
-          Open the app
+          Open the login page
           <ExternalLink className="h-4 w-4" />
         </a>
         <button
