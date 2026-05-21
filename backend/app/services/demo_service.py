@@ -70,17 +70,13 @@ async def clear_demo(db: AsyncSession, user_id: uuid.UUID) -> bool:
     """Tear down a previously-seeded demo. Returns True if anything was deleted."""
 
     user = (
-        await db.execute(
-            select(User).where(User.id == user_id, User.is_demo.is_(True))
-        )
+        await db.execute(select(User).where(User.id == user_id, User.is_demo.is_(True)))
     ).scalar_one_or_none()
     if user is None:
         return False
 
     seed = (
-        await db.execute(
-            select(DemoSeed).where(DemoSeed.user_id == user.id)
-        )
+        await db.execute(select(DemoSeed).where(DemoSeed.user_id == user.id))
     ).scalar_one_or_none()
 
     if seed is not None:
@@ -90,9 +86,7 @@ async def clear_demo(db: AsyncSession, user_id: uuid.UUID) -> bool:
         # Cascade fans out: deleting a function drops its BCP/impact/recovery/
         # exercise/comms/work-area rows. Deleting a vendor drops its assessments.
         if fn_ids:
-            await db.execute(
-                delete(BusinessFunction).where(BusinessFunction.id.in_(fn_ids))
-            )
+            await db.execute(delete(BusinessFunction).where(BusinessFunction.id.in_(fn_ids)))
         if vendor_ids:
             await db.execute(delete(Vendor).where(Vendor.id.in_(vendor_ids)))
 
@@ -105,9 +99,7 @@ async def clear_demo(db: AsyncSession, user_id: uuid.UUID) -> bool:
 # ── private: the actual sample content ──────────────────────────────────────
 
 
-async def _seed_continuity_workspace(
-    db: AsyncSession, user: User
-) -> list[uuid.UUID]:
+async def _seed_continuity_workspace(db: AsyncSession, user: User) -> list[uuid.UUID]:
     payments = BusinessFunction(
         name=f"Payments [{user.email}]",
         description="Card processing for ecommerce — every transaction flows through here.",
@@ -238,7 +230,9 @@ async def _seed_continuity_workspace(
             rto_minutes=5,
             rpo_minutes=1,
             is_recommended=True,
-            details={"rationale": "Best balance of cost and recovery; survives any single-region failure."},
+            details={
+                "rationale": "Best balance of cost and recovery; survives any single-region failure."
+            },
         ),
         RecoveryStrategy(
             function_id=payments.id,
