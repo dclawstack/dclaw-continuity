@@ -49,9 +49,7 @@ async def test_clear_wipes_user_and_their_data(client):
 
     # Clear is no-auth on purpose — only requires the user_id, which the
     # landing tab holds in localStorage.
-    cleared = await client.post(
-        "/api/v1/demo/clear", json={"user_id": user_id}
-    )
+    cleared = await client.post("/api/v1/demo/clear", json={"user_id": user_id})
     assert cleared.status_code == 204
 
     # User no longer exists → their token doesn't authenticate them.
@@ -81,9 +79,7 @@ async def test_clear_refuses_non_demo_user(client):
     ).json()
     # Try to clear them via the demo endpoint — should be a silent no-op
     # (clear_demo checks is_demo before deleting). User still exists.
-    resp = await client.post(
-        "/api/v1/demo/clear", json={"user_id": real["user"]["id"]}
-    )
+    resp = await client.post("/api/v1/demo/clear", json={"user_id": real["user"]["id"]})
     assert resp.status_code == 204
     me = await client.get(
         "/api/v1/auth/me",
