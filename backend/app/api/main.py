@@ -12,6 +12,7 @@ from app.api.v1 import (
     communications,
     copilot,
     crisis,
+    demo,
     dependencies,
     exercises,
     functions,
@@ -52,6 +53,7 @@ app.add_middleware(
 
 app.include_router(health.router, prefix="/health", tags=["health"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(demo.router, prefix="/api/v1/demo", tags=["demo"])
 
 # Prometheus /metrics — Counter/Histogram per endpoint + status code.
 # Excludes /health and /metrics itself from the request-counter to keep

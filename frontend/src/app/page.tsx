@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DemoSection } from "@/components/landing/DemoSection";
 import {
   AlertCircle,
   AlertTriangle,
@@ -29,6 +30,7 @@ export default function LandingPage() {
       <Hero />
       <FeatureGroups />
       <CopilotSection />
+      <DemoSection />
       <StackSection />
       <CTASection />
       <Footer />

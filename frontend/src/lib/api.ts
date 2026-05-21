@@ -551,4 +551,20 @@ export const api = {
         body: JSON.stringify({ submission_reference: submissionReference }),
       }),
   },
+
+  demo: {
+    seed: () =>
+      request<{
+        user_id: string;
+        email: string;
+        password: string;
+        access_token: string;
+        expires_in: number;
+      }>("/api/v1/demo/seed", { method: "POST" }),
+    clear: (userId: string) =>
+      request<void>("/api/v1/demo/clear", {
+        method: "POST",
+        body: JSON.stringify({ user_id: userId }),
+      }),
+  },
 };

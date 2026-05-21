@@ -20,3 +20,5 @@ class User(Base, TimestampMixin):
 
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(default=False, nullable=False)
+    # Demo users get auto-deleted when the visitor clicks "Clear demo".
+    is_demo: Mapped[bool] = mapped_column(default=False, nullable=False)

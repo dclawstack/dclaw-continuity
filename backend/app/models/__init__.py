@@ -6,6 +6,7 @@ from app.models.business_function import BusinessFunction, Criticality
 from app.models.communication import CommunicationPlan, CommunicationTemplate
 from app.models.copilot import CopilotMessage
 from app.models.crisis import ActivationStatus, CrisisActivation
+from app.models.demo import DemoSeed
 from app.models.dependency import Dependency, DependencyType
 from app.models.exercise import Exercise, ExerciseStatus
 from app.models.impact_assessment import ImpactAssessment
@@ -31,6 +32,7 @@ __all__ = [
     "CopilotMessage",
     "CrisisActivation",
     "Criticality",
+    "DemoSeed",
     "Dependency",
     "DependencyType",
     "Exercise",

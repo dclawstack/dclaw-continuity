@@ -26,17 +26,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (token && isAuthPage) router.replace("/dashboard");
   }, [token, loading, isPublic, isAuthPage, router]);
 
+  // Landing page: render bare, no chrome. Skip the loading gate so the
+  // public marketing surface SSRs immediately (no flash of "Loading…").
+  if (pathname === "/") {
+    return <>{children}</>;
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen text-sm text-slate-500">
         Loading…
       </div>
     );
-  }
-
-  // Landing page: render bare, no chrome.
-  if (pathname === "/") {
-    return <>{children}</>;
   }
 
   // Auth pages: thin top bar, centered card.
