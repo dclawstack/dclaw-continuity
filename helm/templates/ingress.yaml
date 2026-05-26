@@ -1,60 +1,31 @@
 {{- if .Values.ingress.enabled }}
-{{- /*
-TLS-terminating ingress that routes `/api`, `/health`, `/metrics` to the
-backend Service and everything else to the frontend Service.
-
-TLS is enabled when `.Values.ingress.tls.enabled` is true. If
-`.Values.ingress.tls.secretName` is set we trust that secret already
-exists (BYO cert). Otherwise, if cert-manager annotations are set,
-cert-manager will provision and renew the cert into a new Secret of
-the same name. Either way, the `tls` block below references that name.
-
-PRD §4.3 requires TLS on all ingress; the default values keep this off
-only so dev clusters without a TLS terminator don't hard-fail. For prod,
-set ingress.enabled=true + ingress.tls.enabled=true.
-*/}}
+{{- $name := include "dclaw.name" . -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "dclaw-app.fullname" . }}
+  name: {{ $name }}
   labels:
-    app.kubernetes.io/name: {{ include "dclaw-app.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/component: ingress
+    app.kubernetes.io/name: {{ $name }}
+    app.kubernetes.io/part-of: dclaw-platform
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  {{- with .Values.ingress.className }}
-  ingressClassName: {{ . | quote }}
-  {{- end }}
-  {{- if and .Values.ingress.tls.enabled .Values.ingress.host }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- with .Values.ingress.tls }}
   tls:
-    - hosts:
-        - {{ .Values.ingress.host | quote }}
-      secretName: {{ default (printf "%s-tls" (include "dclaw-app.fullname" .)) .Values.ingress.tls.secretName | quote }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   rules:
-    - host: {{ .Values.ingress.host | quote }}
+    - host: {{ .Values.ingress.host }}
       http:
         paths:
-          # Backend paths first — more specific.
-          {{- range .Values.ingress.backendPaths }}
-          - path: {{ . | quote }}
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "dclaw-app.fullname" $ }}-backend
-                port:
-                  number: {{ $.Values.service.backend.port }}
-          {{- end }}
-          # Fall-through: everything else goes to the frontend.
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: {{ include "dclaw-app.fullname" . }}-frontend
+                name: {{ $name }}
                 port:
-                  number: {{ .Values.service.frontend.port }}
+                  number: {{ .Values.frontend.service.port }}
 {{- end }}

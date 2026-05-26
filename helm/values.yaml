@@ -1,179 +1,80 @@
-replicaCount: 1
+# Default values = DEV / local cluster. Reproduces the live dclaw-core deployment.
+# Plain `helm install dclaw-continuity ./helm -n dclaw-core` brings the app up.
+# For the cloud/GHCR deployment, override with: -f values-prod.yaml
+#
+# Note: the live app runs with minio/redis disabled (REDIS_URL / S3_ENDPOINT_URL
+# empty). The original chart could provision those operators; see values-prod.yaml.
 
-image:
-  backend:
-    repository: ghcr.io/dclawstack/dclaw-continuity-backend
-    tag: latest
-    pullPolicy: IfNotPresent
-  frontend:
-    repository: ghcr.io/dclawstack/dclaw-continuity-frontend
-    tag: latest
-    pullPolicy: IfNotPresent
+nameOverride: ""
 
-service:
-  backend:
-    type: ClusterIP
-    port: 8000
-  frontend:
-    type: ClusterIP
-    port: 3000
-
-# Public ingress for the app. PRD §4.3 requires TLS on ingress in prod;
-# keep this off in dev when there's no TLS terminator in the cluster.
-ingress:
-  enabled: false
-  className: nginx
-  # Hostname users hit in the browser; required when ingress.enabled=true.
-  host: ""
-  # Paths sent to the backend Service. Everything else falls through to
-  # the frontend (Next.js).
-  backendPaths:
-    - /api/v1
-    - /health
-    - /metrics
-  # Default annotations work with NGINX ingress + cert-manager. Override
-  # for traefik / istio / GKE / managed offerings.
-  annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: 25m  # allow attachment uploads
-    # Uncomment for cert-manager auto-provisioning:
-    # cert-manager.io/cluster-issuer: letsencrypt-prod
-  tls:
-    enabled: false
-    # If set, must reference an existing TLS Secret containing tls.crt + tls.key.
-    # When unset and cert-manager annotation above is on, cert-manager creates
-    # `<release>-dclaw-continuity-tls` automatically.
-    secretName: ""
-
-resources: {}
-
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 5
-  targetCPUUtilizationPercentage: 80
-
-nodeSelector: {}
-tolerations: []
-affinity: {}
-
-# App secrets. In production point existingSecret at a Secret you create
-# out-of-band (sealed-secrets, external-secrets, helm --set, etc.) so the
-# JWT signing key never lives in plaintext in values / git.
-auth:
-  # If set, the chart will NOT render <fullname>-secrets; the backend
-  # Deployment is expected to envFrom: this Secret instead. The Secret
-  # must contain at minimum: APP_ENV, AUTH_DEV_MODE, SECRET_KEY, the
-  # OLLAMA_* / OPENROUTER_* keys.
-  existingSecret: ""
-  # Dev-only defaults. The chart renders these into the in-cluster Secret
-  # when existingSecret is empty. Override every "change-me-*" value
-  # before deploying to anything but a sandbox cluster.
-  authDevMode: "false"
-  secretKey: "change-me-in-production-32-byte-dev-only-secret!"
-  openrouterApiKey: ""
-  openrouterModel: "moonshotai/kimi-k2"
-  ollamaBaseUrl: "http://ollama:11434"
-  ollamaModel: "llama3.1"
-  ollamaEmbedModel: "nomic-embed-text"
-
-# CloudNativePG-managed Postgres (required for RAG: pgvector).
-# Disable if you bring your own Postgres.
-cnpg:
+backend:
   enabled: true
-  instances: 3
-  # IMPORTANT: this image MUST include the pgvector extension. The stock
-  # CNPG image does not — build a custom image or use a bundled distribution.
-  image: ghcr.io/dclawstack/cnpg-pgvector:16
-  database: dclaw_continuity
-  owner: dclaw
-  maxConnections: 100
-  sharedBuffers: 256MB
-  storage:
-    size: 10Gi
-    storageClass: ""  # default storage class if unset
-  pg_hba:
-    - host all all 10.0.0.0/8 md5
-    - host all all 172.16.0.0/12 md5
-    - host all all 192.168.0.0/16 md5
+  replicaCount: 1
+  image:
+    repository: docker.io/library/dclaw-continuity-backend
+    tag: local
+    pullPolicy: Never
+  containerPort: 8150
+  service:
+    type: ClusterIP
+    port: 8150
+  env: {}
+  livenessProbe:
+    path: /health/
+    initialDelaySeconds: 15
+    periodSeconds: 30
+  readinessProbe:
+    path: /health/
+    initialDelaySeconds: 10
+    periodSeconds: 10
   resources:
     requests:
       cpu: 100m
-      memory: 512Mi
+      memory: 128Mi
     limits:
-      cpu: 1
-      memory: 2Gi
-  monitoring:
-    enablePodMonitor: false
-  backup: {}
+      cpu: 500m
+      memory: 512Mi
 
-# In-cluster Redis for the embedding cache.
-# Disable and point REDIS_URL at a managed Redis if you have one.
-redis:
+frontend:
   enabled: true
-  image: redis:7-alpine
-  storage:
-    size: 1Gi
-    storageClass: ""
+  replicaCount: 1
+  image:
+    repository: docker.io/library/dclaw-continuity-frontend
+    tag: local
+    pullPolicy: Never
+  containerPort: 3064
+  service:
+    type: NodePort
+    port: 3064
+    nodePort: 30052
+  env:
+    PORT: "3064"
+    BACKEND_URL: http://dclaw-continuity-backend:8150
+  readinessProbe:
+    path: /
+    initialDelaySeconds: 5
+    periodSeconds: 10
   resources:
     requests:
       cpu: 50m
-      memory: 64Mi
+      memory: 128Mi
     limits:
-      cpu: 500m
+      cpu: 200m
       memory: 256Mi
 
-# In-cluster MinIO for object storage (BCP attachments).
-# Disable and set S3_* env vars to use AWS S3 / a managed provider instead.
-minio:
-  enabled: true
-  image: minio/minio:latest
-  # CHANGE THESE in production via --set or sealed secret.
-  rootUser: minioadmin
-  rootPassword: minioadmin
-  bucket: dclaw-continuity
-  storage:
-    size: 10Gi
-    storageClass: ""
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 1
-      memory: 1Gi
+secret:
+  name: ""
+  data:
+    DATABASE_URL: postgresql+asyncpg://postgres:postgres@dclaw-shared-postgres:5432/dclaw_continuity
+    APP_ENV: production
+    AUTH_DEV_MODE: "true"
+    SECRET_KEY: dclaw-continuity-local-secret-key-32-bytes-min!
+    REDIS_URL: ""
+    S3_ENDPOINT_URL: ""
 
-# Prometheus + Grafana observability stack.
-# If your cluster already runs kube-prometheus-stack or similar, set
-# both prometheus.enabled and grafana.enabled to false — the backend
-# still exposes /metrics for any external Prometheus to scrape.
-monitoring:
-  prometheus:
-    enabled: true
-    image: prom/prometheus:v2.54.0
-    retention: 15d
-    storage:
-      size: 10Gi
-      storageClass: ""
-    resources:
-      requests:
-        cpu: 100m
-        memory: 256Mi
-      limits:
-        cpu: 1
-        memory: 1Gi
-  grafana:
-    enabled: true
-    image: grafana/grafana:11.2.0
-    # CHANGE THESE in production via --set or sealed secret.
-    adminUser: admin
-    adminPassword: admin
-    storage:
-      size: 2Gi
-      storageClass: ""
-    resources:
-      requests:
-        cpu: 50m
-        memory: 128Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
+ingress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  host: ""
+  tls: []

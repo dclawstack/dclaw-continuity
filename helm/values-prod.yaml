@@ -1,0 +1,31 @@
+# Cloud / production overrides. Use with:
+#   helm install dclaw-continuity ./helm -n <ns> -f values-prod.yaml
+#
+# To enable the full stack, point REDIS_URL / S3_ENDPOINT_URL at real services and
+# override secret.data accordingly (the original chart shipped minio/redis/prometheus
+# /grafana templates; those are not part of the live deployment and are omitted here).
+
+backend:
+  image:
+    repository: ghcr.io/dclawstack/dclaw-continuity-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+frontend:
+  image:
+    repository: ghcr.io/dclawstack/dclaw-continuity-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  host: continuity.dclawstack.io
+  tls:
+    - secretName: dclaw-continuity-tls
+      hosts:
+        - continuity.dclawstack.io
