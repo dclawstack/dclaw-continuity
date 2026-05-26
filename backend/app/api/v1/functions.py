@@ -13,7 +13,7 @@ from app.services import function_service
 router = APIRouter()
 
 
-@router.get("/", response_model=list[FunctionRead])
+@router.get("", response_model=list[FunctionRead])
 async def list_functions(
     db: AsyncSession = Depends(get_db),
     _: CurrentUser = Depends(get_current_user),
@@ -21,7 +21,7 @@ async def list_functions(
     return await function_service.list_functions(db)
 
 
-@router.post("/", response_model=FunctionRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=FunctionRead, status_code=status.HTTP_201_CREATED)
 async def create_function(
     payload: FunctionCreate,
     db: AsyncSession = Depends(get_db),

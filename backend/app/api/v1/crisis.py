@@ -17,7 +17,7 @@ from app.services import crisis_service
 router = APIRouter()
 
 
-@router.get("/", response_model=list[CrisisActivationRead])
+@router.get("", response_model=list[CrisisActivationRead])
 async def list_activations(
     only_open: bool = Query(default=False),
     db: AsyncSession = Depends(get_db),

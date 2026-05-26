@@ -19,7 +19,7 @@ from app.services import bcp_service, exercise_service
 router = APIRouter()
 
 
-@router.get("/", response_model=list[ExerciseRead])
+@router.get("", response_model=list[ExerciseRead])
 async def list_exercises(
     bcp_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
@@ -28,7 +28,7 @@ async def list_exercises(
     return await exercise_service.list_exercises(db, bcp_id=bcp_id)
 
 
-@router.post("/", response_model=ExerciseRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ExerciseRead, status_code=status.HTTP_201_CREATED)
 async def create_exercise(
     payload: ExerciseCreate,
     db: AsyncSession = Depends(get_db),

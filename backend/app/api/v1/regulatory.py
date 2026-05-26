@@ -18,7 +18,7 @@ from app.services import regulatory_service
 router = APIRouter()
 
 
-@router.get("/", response_model=list[RegulatoryReportRead])
+@router.get("", response_model=list[RegulatoryReportRead])
 async def list_reports(
     db: AsyncSession = Depends(get_db),
     _: CurrentUser = Depends(get_current_user),

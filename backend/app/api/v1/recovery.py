@@ -18,7 +18,7 @@ from app.services import function_service, recovery_service
 router = APIRouter()
 
 
-@router.get("/", response_model=list[RecoveryStrategyRead])
+@router.get("", response_model=list[RecoveryStrategyRead])
 async def list_strategies(
     function_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
@@ -27,7 +27,7 @@ async def list_strategies(
     return await recovery_service.list_strategies(db, function_id=function_id)
 
 
-@router.post("/", response_model=RecoveryStrategyRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=RecoveryStrategyRead, status_code=status.HTTP_201_CREATED)
 async def create_strategy(
     payload: RecoveryStrategyCreate,
     db: AsyncSession = Depends(get_db),

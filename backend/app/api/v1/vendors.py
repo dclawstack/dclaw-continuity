@@ -19,7 +19,7 @@ from app.services import vendor_service
 router = APIRouter()
 
 
-@router.get("/", response_model=list[VendorRead])
+@router.get("", response_model=list[VendorRead])
 async def list_vendors(
     db: AsyncSession = Depends(get_db),
     _: CurrentUser = Depends(get_current_user),
@@ -27,7 +27,7 @@ async def list_vendors(
     return await vendor_service.list_vendors(db)
 
 
-@router.post("/", response_model=VendorRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=VendorRead, status_code=status.HTTP_201_CREATED)
 async def create_vendor(
     payload: VendorCreate,
     db: AsyncSession = Depends(get_db),

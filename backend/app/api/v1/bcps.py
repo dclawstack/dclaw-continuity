@@ -18,7 +18,7 @@ from app.services import bcp_service, function_service
 router = APIRouter()
 
 
-@router.get("/", response_model=list[BCPRead])
+@router.get("", response_model=list[BCPRead])
 async def list_bcps(
     function_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
@@ -27,7 +27,7 @@ async def list_bcps(
     return await bcp_service.list_bcps(db, function_id=function_id)
 
 
-@router.post("/", response_model=BCPRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=BCPRead, status_code=status.HTTP_201_CREATED)
 async def create_bcp(
     payload: BCPCreate,
     db: AsyncSession = Depends(get_db),

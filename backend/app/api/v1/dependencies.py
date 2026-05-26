@@ -13,7 +13,7 @@ from app.services import dependency_service
 router = APIRouter()
 
 
-@router.get("/", response_model=list[DependencyRead])
+@router.get("", response_model=list[DependencyRead])
 async def list_deps(
     function_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
@@ -22,7 +22,7 @@ async def list_deps(
     return await dependency_service.list_dependencies(db, function_id=function_id)
 
 
-@router.post("/", response_model=DependencyRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=DependencyRead, status_code=status.HTTP_201_CREATED)
 async def create_dep(
     payload: DependencyCreate,
     db: AsyncSession = Depends(get_db),

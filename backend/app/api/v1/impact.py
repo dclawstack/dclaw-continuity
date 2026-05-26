@@ -17,7 +17,7 @@ from app.services import function_service, impact_service
 router = APIRouter()
 
 
-@router.get("/", response_model=list[ImpactAssessmentRead])
+@router.get("", response_model=list[ImpactAssessmentRead])
 async def list_impact(
     function_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
@@ -26,7 +26,7 @@ async def list_impact(
     return await impact_service.list_impact_assessments(db, function_id=function_id)
 
 
-@router.post("/", response_model=ImpactAssessmentRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ImpactAssessmentRead, status_code=status.HTTP_201_CREATED)
 async def create_impact(
     payload: ImpactAssessmentCreate,
     db: AsyncSession = Depends(get_db),

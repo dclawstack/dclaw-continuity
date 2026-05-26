@@ -19,7 +19,7 @@ from app.services import supply_chain_service
 router = APIRouter()
 
 
-@router.get("/", response_model=list[SupplierRead])
+@router.get("", response_model=list[SupplierRead])
 async def list_suppliers(
     db: AsyncSession = Depends(get_db),
     _: CurrentUser = Depends(get_current_user),
@@ -27,7 +27,7 @@ async def list_suppliers(
     return await supply_chain_service.list_suppliers(db)
 
 
-@router.post("/", response_model=SupplierRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=SupplierRead, status_code=status.HTTP_201_CREATED)
 async def create_supplier(
     payload: SupplierCreate,
     db: AsyncSession = Depends(get_db),

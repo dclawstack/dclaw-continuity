@@ -18,7 +18,7 @@ from app.services import communication_service, function_service
 router = APIRouter()
 
 
-@router.get("/", response_model=list[CommunicationPlanRead])
+@router.get("", response_model=list[CommunicationPlanRead])
 async def list_plans(
     function_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
@@ -27,7 +27,7 @@ async def list_plans(
     return await communication_service.list_plans(db, function_id=function_id)
 
 
-@router.post("/", response_model=CommunicationPlanRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CommunicationPlanRead, status_code=status.HTTP_201_CREATED)
 async def create_plan(
     payload: CommunicationPlanCreate,
     db: AsyncSession = Depends(get_db),
