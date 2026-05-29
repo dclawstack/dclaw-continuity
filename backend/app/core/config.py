@@ -1,11 +1,16 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Repo-root .env wins over backend/.env so a single file at the repo root works
+# regardless of whether uvicorn is launched from backend/ or the repo root.
+_REPO_ROOT_ENV = Path(__file__).resolve().parents[3] / ".env"
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(str(_REPO_ROOT_ENV), ".env"),
         case_sensitive=False,
         extra="ignore",
     )
