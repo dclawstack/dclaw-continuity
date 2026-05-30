@@ -39,6 +39,13 @@ class Settings(BaseSettings):
     ollama_embed_model: str = "nomic-embed-text"
 
     llm_request_timeout: int = 60
+    # Local Ollama models (e.g. llama3.1 on CPU) generate slowly — a few
+    # tokens/sec — so a flat 60s timeout strangles larger generations. The
+    # Ollama read timeout is scaled by an assumed token budget using this
+    # throughput (deliberately conservative vs. measured rates to leave
+    # headroom for prompt processing and slower hardware).
+    ollama_tokens_per_second: float = 4.0
+    ollama_assumed_max_tokens: int = 1500
 
     # RAG
     embedding_dim: int = 768

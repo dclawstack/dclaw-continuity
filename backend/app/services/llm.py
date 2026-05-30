@@ -136,11 +136,25 @@ class LLMClient:
             "stream": False,
         }
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        async with httpx.AsyncClient(timeout=_ollama_timeout()) as client:
             resp = await client.post(url, json=payload)
             resp.raise_for_status()
             data = resp.json()
         return data["choices"][0]["message"]["content"]
+
+
+def _ollama_timeout() -> httpx.Timeout:
+    """Read timeout scaled to the assumed token budget for slow local CPU inference.
+
+    A flat timeout (fine for cloud) cuts off large local generations partway
+    through. We size the *read* timeout to how long the model could plausibly
+    take to emit `ollama_assumed_max_tokens` (plus headroom for prompt
+    processing), while keeping connect/write short so a genuinely unreachable
+    Ollama still fails fast.
+    """
+    tps = settings.ollama_tokens_per_second or 4.0
+    read = max(settings.llm_request_timeout, 45 + settings.ollama_assumed_max_tokens / tps)
+    return httpx.Timeout(read, connect=10.0, write=30.0, pool=10.0)
 
 
 def _strip_fences(s: str) -> str:
