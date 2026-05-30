@@ -164,15 +164,23 @@ def _split_reply_and_suggestions(raw: str) -> tuple[str, list[CopilotSuggestion]
     try:
         parsed = json.loads(body)
         items = parsed.get("suggestions", []) if isinstance(parsed, dict) else parsed
-        suggestions = [
-            CopilotSuggestion(
-                action=s.get("action", ""),
-                label=s.get("label", ""),
-                payload=s.get("payload", {}),
+        suggestions = []
+        for s in items:
+            if not isinstance(s, dict) or not s.get("action"):
+                continue
+            # Small models often emit `payload` as a string (e.g. an id) even
+            # when told it's an object. Coerce to {} so the whole reply isn't
+            # lost to a single bad suggestion.
+            payload = s.get("payload", {})
+            if not isinstance(payload, dict):
+                payload = {}
+            suggestions.append(
+                CopilotSuggestion(
+                    action=s.get("action", ""),
+                    label=s.get("label", ""),
+                    payload=payload,
+                )
             )
-            for s in items
-            if isinstance(s, dict) and s.get("action")
-        ]
         return reply, suggestions
     except (json.JSONDecodeError, AttributeError):
         return reply, []
