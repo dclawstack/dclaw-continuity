@@ -128,12 +128,17 @@ class LLMClient:
         json_mode: bool,
         temperature: float,
     ) -> str:
+        # CPU-bound ollama can be very slow; cap response length so the call
+        # finishes inside the proxy's tolerance, and ask ollama to keep the
+        # model resident so subsequent turns skip the cold-load cost.
         url = f"{self.ollama_base_url}/v1/chat/completions"
         payload: dict[str, Any] = {
             "model": self.ollama_model,
             "messages": messages,
             "temperature": temperature,
             "stream": False,
+            "max_tokens": settings.ollama_max_tokens,
+            "keep_alive": settings.ollama_keep_alive,
         }
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:

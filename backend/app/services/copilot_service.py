@@ -43,14 +43,16 @@ async def chat(
 
     conversation_id = request.conversation_id or uuid.uuid4()
     context_snapshot = await _build_context_snapshot(db)
-    history = await _load_history(db, conversation_id, limit=10)
+    # Keep history short — every turn extra costs ~1k tokens of prompt
+    # processing on CPU-only ollama, which dominates total latency.
+    history = await _load_history(db, conversation_id, limit=4)
     retrieved = await rag_service.search(db, request.message)
 
     messages: list[ChatMessage] = [
         ChatMessage(role="system", content=COPILOT_SYSTEM_PROMPT),
         ChatMessage(
             role="system",
-            content=f"Current workspace snapshot:\n{json.dumps(context_snapshot, indent=2)}",
+            content=_format_snapshot(context_snapshot),
         ),
     ]
     if retrieved:
@@ -145,6 +147,25 @@ async def _build_context_snapshot(db: AsyncSession) -> dict:
     }
 
 
+def _format_snapshot(snapshot: dict) -> str:
+    """Prose summary — small models tend to regurgitate JSON we pass verbatim."""
+
+    counts = snapshot.get("counts", {})
+    parts = [
+        "Workspace summary (for your reference only — do NOT repeat this back "
+        "to the user verbatim):",
+        f"- {counts.get('business_functions', 0)} business functions",
+        f"- {counts.get('bcps', 0)} BCPs",
+        f"- {counts.get('impact_assessments', 0)} impact assessments",
+        f"- {counts.get('recovery_strategies', 0)} recovery strategies",
+    ]
+    samples = snapshot.get("sample_functions") or []
+    if samples:
+        names = ", ".join(s.get("name", "?") for s in samples)
+        parts.append(f"- example functions: {names}")
+    return "\n".join(parts)
+
+
 def _format_retrieved(hits: list) -> str:
     lines = ["Retrieved evidence (most similar first):"]
     for h in hits:
@@ -153,18 +174,27 @@ def _format_retrieved(hits: list) -> str:
 
 
 _SUGGEST_RE = re.compile(r"<suggest>(.*?)</suggest>", re.DOTALL)
+# Small models frequently leave dangling open/close tags or truncated forms
+# like `<suggest.` after we've extracted the JSON. Strip them so the reply
+# doesn't end with stray markup.
+_SUGGEST_STRAY_RE = re.compile(r"</?suggest[^>]*>?", re.IGNORECASE)
 
 
 def _split_reply_and_suggestions(raw: str) -> tuple[str, list[CopilotSuggestion]]:
-    match = _SUGGEST_RE.search(raw)
-    if not match:
-        return raw.strip(), []
-    reply = (raw[: match.start()] + raw[match.end() :]).strip()
-    body = match.group(1).strip()
-    try:
-        parsed = json.loads(body)
+    matches = list(_SUGGEST_RE.finditer(raw))
+    reply = _SUGGEST_RE.sub("", raw)
+    reply = _SUGGEST_STRAY_RE.sub("", reply).strip()
+
+    suggestions: list[CopilotSuggestion] = []
+    for match in matches:
+        body = match.group(1).strip()
+        try:
+            parsed = json.loads(body)
+        except json.JSONDecodeError:
+            continue
         items = parsed.get("suggestions", []) if isinstance(parsed, dict) else parsed
-        suggestions = []
+        if not isinstance(items, list):
+            continue
         for s in items:
             if not isinstance(s, dict) or not s.get("action"):
                 continue
@@ -181,6 +211,4 @@ def _split_reply_and_suggestions(raw: str) -> tuple[str, list[CopilotSuggestion]
                     payload=payload,
                 )
             )
-        return reply, suggestions
-    except (json.JSONDecodeError, AttributeError):
-        return reply, []
+    return reply, suggestions
