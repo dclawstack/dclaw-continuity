@@ -37,8 +37,12 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.1"
     ollama_embed_model: str = "nomic-embed-text"
+    # Cap generation length and keep the model resident — without these,
+    # CPU-only ollama chats run 2+ minutes and the dev proxy times out.
+    ollama_max_tokens: int = 256
+    ollama_keep_alive: str = "10m"
 
-    llm_request_timeout: int = 60
+    llm_request_timeout: int = 180
 
     # RAG
     embedding_dim: int = 768
