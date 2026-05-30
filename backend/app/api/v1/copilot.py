@@ -35,7 +35,7 @@ async def chat(
             try:
                 result = await asyncio.wait_for(asyncio.shield(task), timeout=10)
                 break
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 yield b" "
         yield result.model_dump_json().encode()
 
