@@ -8,6 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import CurrentUser, get_current_user
 from app.core.database import get_db
+from app.core.rate_limit import (
+    check_account_lock,
+    clear_failed_logins,
+    enforce_ip_rate_limit,
+    record_failed_login,
+)
 from app.schemas.auth import (
     LoginRequest,
     SignupRequest,
@@ -23,6 +29,7 @@ router = APIRouter()
 async def signup(
     payload: SignupRequest,
     db: AsyncSession = Depends(get_db),
+    _: None = Depends(enforce_ip_rate_limit),
 ):
     try:
         user = await auth_service.signup(db, payload)
@@ -43,14 +50,18 @@ async def signup(
 async def login(
     payload: LoginRequest,
     db: AsyncSession = Depends(get_db),
+    _: None = Depends(enforce_ip_rate_limit),
 ):
+    await check_account_lock(payload.email)
     try:
         user = await auth_service.authenticate(db, payload.email, payload.password)
     except auth_service.InvalidCredentials:
+        await record_failed_login(payload.email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="invalid email or password",
         ) from None
+    await clear_failed_logins(payload.email)
     token, ttl = auth_service.issue_token(user)
     return TokenResponse(
         access_token=token,
