@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 24  # 24h
     jwt_algorithm: str = "HS256"
 
+    # Brute-force protection on auth endpoints. Best-effort: enforced only when
+    # Redis is reachable (see app.core.rate_limit), so a Redis outage never
+    # locks users out of a degraded system.
+    auth_rate_limit_per_minute: int = 5  # per-IP requests/min on signup+login
+    auth_max_failed_logins: int = 5  # consecutive failures before lockout
+    auth_lockout_window_seconds: int = 15 * 60  # how long failures + lock persist
+
     # LLM
     openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"

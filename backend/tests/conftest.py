@@ -17,6 +17,11 @@ from app.models.base import Base
 from app.services import embedding as embedding_module
 from app.services import llm as llm_module
 
+# Keep the suite hermetic from any Redis the dev box happens to be running:
+# with redis_url empty, get_redis() returns None and the best-effort auth
+# rate limiter no-ops. Tests that exercise the limiter inject fakeredis directly.
+settings.redis_url = ""
+
 TEST_DATABASE_URL = os.environ.get(
     "DATABASE_URL",
     "postgresql+asyncpg://postgres:postgres@localhost:5432/dclaw_continuity_test",
